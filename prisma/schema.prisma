@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?
+  name          String?
+  isAdmin       Boolean   @default(false)
+  image         String?
+  
+  // Astrology Profile
+  birthDate     DateTime?
+  birthTime     String?   // HH:mm
+  dayOfWeek     String?   // e.g., "Monday"
+  zodiacSign    String?
+  
+  // Credits
+  credits       Int       @default(0)
+  
+  // Relationships
+  orders        Order[]
+  downloads     Download[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Wallpaper {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  price         Int       @default(1) // in credits
+  imageUrl      String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  
+  // Auspicious Tags
+  blessing      String?
+  deity         String?   // e.g., "Ganesha"
+  
+  // Section Flags
+  isPopular          Boolean   @default(false)
+  isNew              Boolean   @default(false)
+  isOffering         Boolean   @default(false)
+  relatedWallpaperId String?
+  relatedWallpaper   Wallpaper?  @relation("WallpaperOfferings", fields: [relatedWallpaperId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  offerings          Wallpaper[] @relation("WallpaperOfferings")
+  
+  downloads     Download[]
+  slideshows    Slideshow[]
+  customOrders  CustomOrder[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Category {
+  id            String      @id @default(cuid())
+  name          String      @unique
+  subtitle      String?
+  description   String?
+  bgColor       String      @default("#D9C4A1")
+  bgImageUrl    String?
+  textColor     String      @default("#1e293b")
+  imageUrl      String?
+  tooltip       String?
+  order         Int         @default(0)
+  wallpapers    Wallpaper[]
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  amount        Float       // Real currency amount
+  credits       Int         // Credits purchased
+  status        OrderStatus @default(PENDING)
+  paymentType   String      // "QR_PROMPTPAY", "CREDIT_CARD"
+  paymentRef    String?     @unique
+  createdAt     DateTime    @default(now())
+}
+
+model Download {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  wallpaperId   String
+  wallpaper     Wallpaper @relation(fields: [wallpaperId], references: [id])
+  customText    String?
+  generatedUrl  String?
+  createdAt     DateTime  @default(now())
+}
+
+model Article {
+  id            String    @id @default(cuid())
+  title         String
+  content       String    @db.Text
+  author        String?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model Slideshow {
+  id            String    @id @default(cuid())
+  title         String
+  subtitle      String?
+  bgColor       String    @default("#D1A7FF")
+  buttonText    String    @default("Get Now")
+  imageUrl      String?
+  wallpaperId   String?
+  wallpaper     Wallpaper? @relation(fields: [wallpaperId], references: [id])
+  isActive      Boolean   @default(true)
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model CustomOrder {
+  id            String      @id @default(cuid())
+  wallpaperId   String
+  wallpaper     Wallpaper   @relation(fields: [wallpaperId], references: [id])
+  displayedName String
+  birthDate     String      // Year/Date as string from UI
+  dayOfWeek     String
+  zodiac        String
+  email         String
+  discountCode  String?
+  totalAmount   Float
+  status        OrderStatus @default(PENDING)
+  paymentId     String?     @unique
+  paymentMethod String?     // e.g., "PROMPTPAY", "CREDIT_CARD"
+  paymentStatus String      @default("UNPAID")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+
+enum OrderStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}

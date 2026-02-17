@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 70, 60, 50;
+  /* Softer dark brown/gray instead of harsh slate */
+  --background-cream: #FEF9E7;
+  --gold-primary: #D4AF37;
+  --gold-secondary: #AA8C2C;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: var(--background-cream);
+  font-family: var(--font-sarabun), sans-serif;
+  overflow-x: hidden;
+}
+
+.gold-bg {
+  background: linear-gradient(135deg, #F9E4B7 0%, #D4AF37 100%);
+}
+
+.gold-text {
+  background: linear-gradient(135deg, #AA8C2C 0%, #D4AF37 50%, #AA8C2C 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: shine 5s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.lavender-gradient {
+  background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+}
+
+.card-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
