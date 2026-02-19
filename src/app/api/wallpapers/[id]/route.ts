@@ -80,6 +80,60 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             where: { id: params.id },
             data: data
         });
+
+        // Handle Content Blocks for PUT
+        if (!contentType.includes('application/json')) {
+            const formData = await req.formData();
+            const contentBlocksJson = formData.get('contentBlocks') as string;
+
+            if (contentBlocksJson) {
+                try {
+                    const blocks = JSON.parse(contentBlocksJson);
+
+                    // Delete existing blocks to replace them (simplest strategy to handle order/deletes)
+                    // We need to transaction this ideally, but for now sequential is fine.
+                    await prisma.wallpaperContent.deleteMany({
+                        where: { wallpaperId: params.id }
+                    });
+
+                    const uploadDir = join(process.cwd(), 'public', 'uploads', 'wallpapers');
+                    // Ensure dir exists (it might not if only textual updates)
+                    await mkdir(uploadDir, { recursive: true });
+
+                    for (let i = 0; i < blocks.length; i++) {
+                        const block = blocks[i];
+                        // Frontend sends contentImage_0, contentImage_1 etc. corresponding to the array index
+                        const contentImageFile = formData.get(`contentImage_${i}`) as File | null;
+                        let contentImageUrl = block.imageUrl; // Use existing URL if no new file
+
+                        if (contentImageFile) {
+                            const cBytes = await contentImageFile.arrayBuffer();
+                            const cBuffer = Buffer.from(cBytes);
+                            const cFilename = `${Date.now()}_block_${i}_${contentImageFile.name.replace(/\s+/g, '-')}`;
+                            const cPath = join(uploadDir, cFilename);
+                            await writeFile(cPath, cBuffer);
+                            contentImageUrl = `/uploads/wallpapers/${cFilename}`;
+                        }
+
+                        await prisma.wallpaperContent.create({
+                            data: {
+                                wallpaperId: params.id,
+                                imageUrl: contentImageUrl,
+                                text: block.text,
+                                textColor: block.textColor || '#FFFFFF',
+                                textSize: block.textSize || 'base',
+                                textPosition: block.textPosition || 'center',
+                                fontFamily: block.fontFamily || 'sans',
+                                order: i
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error("Error processing content blocks in PUT:", err);
+                }
+            }
+        }
+
         return NextResponse.json(updatedWallpaper);
     } catch (error) {
         console.error("Error updating wallpaper:", error);

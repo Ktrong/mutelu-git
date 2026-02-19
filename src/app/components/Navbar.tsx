@@ -32,6 +32,14 @@ const Navbar = () => {
         { name: "ติดต่อเรา", href: "/contact" },
     ];
 
+    const isAdminRoute = pathname?.startsWith('/admin');
+    const isLoginPage = pathname === '/admin/login';
+
+    const handleLogout = () => {
+        localStorage.removeItem('adminUser');
+        window.location.href = '/';
+    };
+
     return (
         <nav
             className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? "bg-cream/90 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-4"
@@ -40,53 +48,80 @@ const Navbar = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
-                    <Link href="/" className="flex-shrink-0 flex items-center">
+                    <Link href={isAdminRoute ? "/admin" : "/"} className="flex-shrink-0 flex items-center">
                         <span className="font-sarabun font-bold text-2xl text-gold-dark tracking-wider">
                             MUTELU<span className="text-gold">WALLPAPER</span>
+                            {isAdminRoute && <span className="ml-2 text-xs bg-gold text-white px-2 py-0.5 rounded-full align-middle">ADMIN</span>}
                         </span>
                     </Link>
 
-                    {/* Desktop Menu */}
-                    <div className="hidden md:flex space-x-8 items-center">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                className={`text-sm font-medium transition-colors duration-200 hover:text-gold ${pathname === link.href ? "text-gold-dark" : "text-gray-600"
-                                    }`}
-                            >
-                                {link.name}
-                            </Link>
-                        ))}
-                    </div>
+                    {/* Desktop Menu - Hide on Admin Pages */}
+                    {!isAdminRoute && (
+                        <div className="hidden md:flex space-x-8 items-center">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.name}
+                                    href={link.href}
+                                    className={`text-sm font-medium transition-colors duration-200 hover:text-gold ${pathname === link.href ? "text-gold-dark" : "text-gray-600"
+                                        }`}
+                                >
+                                    {link.name}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
 
-                    {/* Icons */}
+                    {/* Icons / Right Side */}
                     <div className="hidden md:flex items-center space-x-6">
-                        <button className="text-gray-600 hover:text-gold transition-colors">
-                            <Search size={20} />
-                        </button>
-                        <Link href="/profile" className="text-gray-600 hover:text-gold transition-colors">
-                            <User size={20} />
-                        </Link>
-                        <Link href="/auth/login" className="text-sm font-medium text-gold-dark border border-gold-dark px-4 py-1.5 rounded-full hover:bg-gold-light/20 transition-all">
-                            Login
-                        </Link>
+                        {isAdminRoute ? (
+                            !isLoginPage && (
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-sm font-medium text-red-500 border border-red-500 px-4 py-1.5 rounded-full hover:bg-red-50 transition-all flex items-center gap-2"
+                                >
+                                    ออกจากระบบ
+                                </button>
+                            )
+                        ) : (
+                            <>
+                                <button className="text-gray-600 hover:text-gold transition-colors">
+                                    <Search size={20} />
+                                </button>
+                                <Link href="/profile" className="text-gray-600 hover:text-gold transition-colors">
+                                    <User size={20} />
+                                </Link>
+                                <Link href="/auth/login" className="text-sm font-medium text-gold-dark border border-gold-dark px-4 py-1.5 rounded-full hover:bg-gold-light/20 transition-all">
+                                    Login
+                                </Link>
+                            </>
+                        )}
                     </div>
 
-                    {/* Mobile Menu Button */}
+                    {/* Mobile Menu Button - Hide on Admin Pages? Or show streamlined? */}
                     <div className="md:hidden flex items-center">
-                        <button
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="text-gray-600 hover:text-gold p-2 transition-colors"
-                        >
-                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                        </button>
+                        {isAdminRoute ? (
+                            !isLoginPage && (
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-red-500"
+                                >
+                                    ออกจากระบบ
+                                </button>
+                            )
+                        ) : (
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="text-gray-600 hover:text-gold p-2 transition-colors"
+                            >
+                                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Mobile Menu */}
-            {isMenuOpen && (
+            {/* Mobile Menu - Only for non-admin */}
+            {!isAdminRoute && isMenuOpen && (
                 <div className="md:hidden bg-cream border-t border-gold/10 absolute w-full shadow-lg">
                     <div className="px-4 pt-2 pb-6 space-y-2">
                         {navLinks.map((link) => (

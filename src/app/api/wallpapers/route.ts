@@ -87,6 +87,43 @@ export async function POST(req: Request) {
             }
         });
 
+        // 2. Handle Content Blocks
+        const contentBlocksJson = formData.get('contentBlocks') as string;
+        if (contentBlocksJson) {
+            try {
+                const blocks = JSON.parse(contentBlocksJson);
+                for (let i = 0; i < blocks.length; i++) {
+                    const block = blocks[i];
+                    const contentImageFile = formData.get(`contentImage_${i}`) as File | null;
+                    let contentImageUrl = block.imageUrl;
+
+                    if (contentImageFile) {
+                        const cBytes = await contentImageFile.arrayBuffer();
+                        const cBuffer = Buffer.from(cBytes);
+                        const cFilename = `${Date.now()}_block_${i}_${contentImageFile.name.replace(/\s+/g, '-')}`;
+                        const cPath = path.join(uploadDir, cFilename);
+                        await writeFile(cPath, cBuffer);
+                        contentImageUrl = `/uploads/wallpapers/${cFilename}`;
+                    }
+
+                    await prisma.wallpaperContent.create({
+                        data: {
+                            wallpaperId: newWallpaper.id,
+                            imageUrl: contentImageUrl,
+                            text: block.text,
+                            textColor: block.textColor,
+                            textSize: block.textSize,
+                            textPosition: block.textPosition,
+                            fontFamily: block.fontFamily,
+                            order: i
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Error processing content blocks:", err);
+            }
+        }
+
         return NextResponse.json(newWallpaper, { status: 201 });
     } catch (error) {
         console.error("Error creating wallpaper:", error);

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X } from 'lucide-react';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -40,6 +40,34 @@ export default function AdminDashboard() {
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+    // Content Blocks State
+    const [contentBlocks, setContentBlocks] = useState<any[]>([]);
+
+    const addContentBlock = () => {
+        setContentBlocks([...contentBlocks, {
+            id: Date.now().toString(),
+            text: '',
+            textColor: '#FFFFFF',
+            textSize: 'base',
+            textPosition: 'center',
+            fontFamily: 'sans',
+            imageFile: null,
+            imageUrl: null
+        }]);
+    };
+
+    const removeContentBlock = (index: number) => {
+        const newBlocks = [...contentBlocks];
+        newBlocks.splice(index, 1);
+        setContentBlocks(newBlocks);
+    };
+
+    const updateContentBlock = (index: number, field: string, value: any) => {
+        const newBlocks = [...contentBlocks];
+        newBlocks[index] = { ...newBlocks[index], [field]: value };
+        setContentBlocks(newBlocks);
+    };
 
     // Form state for User
     const [newUser, setNewUser] = useState({
@@ -182,6 +210,25 @@ export default function AdminDashboard() {
                 formData.append('imageUrl', newWallpaper.imageUrl);
             }
 
+            // Append Content Blocks
+            formData.append('contentBlocks', JSON.stringify(contentBlocks.map((b) => ({
+                id: b.id, // Keep ID if it's an existing one (not temp timestamp)
+                text: b.text,
+                textColor: b.textColor,
+                textSize: b.textSize,
+                textPosition: b.textPosition,
+                fontFamily: b.fontFamily,
+                // If it has an existing imageUrl and no new file, keep it.
+                imageUrl: b.imageUrl,
+                // We don't send file object in JSON
+            }))));
+
+            contentBlocks.forEach((block, index) => {
+                if (block.imageFile) {
+                    formData.append(`contentImage_${index}`, block.imageFile);
+                }
+            });
+
             const url = editingWallpaper ? `/api/wallpapers/${editingWallpaper.id}` : '/api/wallpapers';
             const method = editingWallpaper ? 'PUT' : 'POST';
 
@@ -196,6 +243,7 @@ export default function AdminDashboard() {
                 setNewWallpaper({ title: '', description: '', imageUrl: '', categoryId: '', price: 1, blessing: '', deity: '', isPopular: false, isNew: false, isOffering: false, relatedWallpaperId: '' });
                 setSelectedFile(null);
                 setPreviewUrl(null);
+                setContentBlocks([]);
             }
         } catch (error) {
             console.error("Error saving wallpaper:", error);
@@ -653,7 +701,6 @@ export default function AdminDashboard() {
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => {
-                                                            setEditingWallpaper(wp);
                                                             setNewWallpaper({
                                                                 title: wp.title,
                                                                 description: wp.description || '',
@@ -668,6 +715,21 @@ export default function AdminDashboard() {
                                                                 relatedWallpaperId: wp.relatedWallpaperId || ''
                                                             });
                                                             setPreviewUrl(wp.imageUrl);
+                                                            // Populate content blocks from existing data
+                                                            if (wp.contents && Array.isArray(wp.contents)) {
+                                                                setContentBlocks(wp.contents.map((c: any) => ({
+                                                                    id: c.id,
+                                                                    text: c.text || '',
+                                                                    textColor: c.textColor || '#FFFFFF',
+                                                                    textSize: c.textSize || 'base',
+                                                                    textPosition: c.textPosition || 'center',
+                                                                    fontFamily: c.fontFamily || 'sans',
+                                                                    imageUrl: c.imageUrl,
+                                                                    imageFile: null
+                                                                })));
+                                                            } else {
+                                                                setContentBlocks([]);
+                                                            }
                                                             setShowAddModal(true);
                                                         }}
                                                         className="p-2 text-slate-400 hover:text-gold-primary transition-colors"
@@ -873,7 +935,7 @@ export default function AdminDashboard() {
             {/* Modal for adding wallpaper */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
-                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
+                    <div className="bg-white w-full max-w-xl md:max-w-3xl lg:max-w-4xl rounded-[2.5rem] p-6 md:p-8 shadow-2xl animate-in zoom-in duration-300 max-h-[85vh] overflow-y-auto custom-scrollbar">
                         <h2 className="text-xl font-bold text-slate-800 mb-6">
                             {editingWallpaper ? 'แก้ไขข้อมูลวอลเปเปอร์' : 'เพิ่มวอลเปเปอร์ใหม่'}
                         </h2>
@@ -903,6 +965,47 @@ export default function AdminDashboard() {
                                     </select>
                                 </div>
                             </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำอธิบาย (Description)</label>
+                                <textarea
+                                    rows={3}
+                                    className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm resize-none"
+                                    value={newWallpaper.description}
+                                    onChange={(e) => setNewWallpaper({ ...newWallpaper, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ราคา (เครดิต)</label>
+                                    <input
+                                        type="number" required min="1"
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                        value={newWallpaper.price}
+                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, price: parseInt(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำอวยพร (Blessing)</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                        value={newWallpaper.blessing}
+                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, blessing: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">เทพเจ้า (Deity)</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                        value={newWallpaper.deity}
+                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, deity: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปภาพวอลเปเปอร์</label>
                                 <div className="space-y-3">
@@ -924,74 +1027,231 @@ export default function AdminDashboard() {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ราคา (เครดิต)</label>
-                                    <input
-                                        type="number" required min="1"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                        value={newWallpaper.price}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, price: parseInt(e.target.value) })}
-                                    />
+
+                            <div className="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">ตั้งค่าพิเศษ</label>
+                                <div className="flex gap-6">
+                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
+                                            checked={newWallpaper.isPopular}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, isPopular: e.target.checked })}
+                                        />
+                                        <span className="text-sm font-medium text-slate-700">สินค้าขายดี (Popular)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
+                                            checked={newWallpaper.isNew}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, isNew: e.target.checked })}
+                                        />
+                                        <span className="text-sm font-medium text-slate-700">สินค้ามาใหม่ (New)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
+                                            checked={newWallpaper.isOffering}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, isOffering: e.target.checked })}
+                                        />
+                                        <span className="text-sm font-medium text-slate-700">ของถวาย (Offering)</span>
+                                    </label>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">เทพเจ้า/สิ่งศักดิ์สิทธิ์</label>
-                                    <input
-                                        type="text"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                        value={newWallpaper.deity}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, deity: e.target.value })}
-                                    />
-                                </div>
+
+                                {newWallpaper.isOffering && (
+                                    <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-slate-200 mt-2">
+                                        <label className="block text-xs font-bold text-orange-500 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                                            <Gift className="w-3 h-3" /> ของถวายสำหรับวอลเปเปอร์หลัก
+                                        </label>
+                                        <select
+                                            className="w-full p-3 rounded-xl bg-orange-50 border border-orange-200 ring-1 ring-orange-200 outline-none text-sm focus:ring-2 focus:ring-orange-300"
+                                            value={newWallpaper.relatedWallpaperId}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, relatedWallpaperId: e.target.value })}
+                                            required={newWallpaper.isOffering}
+                                        >
+                                            <option value="">เลือกวอลเปเปอร์หลัก</option>
+                                            {wallpapers.filter((w: any) => !w.isOffering).map((wp: any) => (
+                                                <option key={wp.id} value={wp.id}>{wp.title}</option>
+                                            ))}
+                                        </select>
+                                        <p className="text-[10px] text-orange-400 ml-1 mt-1 italic">* กรุณาเลือกวอลเปเปอร์หลักที่ของถวายชิ้นนี้จะนำไปใช้ร่วมด้วย</p>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="flex gap-6 px-1">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 rounded border-slate-300 text-gold-primary focus:ring-gold-primary"
-                                        checked={newWallpaper.isPopular}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, isPopular: e.target.checked })}
-                                    />
-                                    <span className="text-sm font-medium text-slate-700">สินค้าขายดี (Popular)</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 rounded border-slate-300 text-gold-primary focus:ring-gold-primary"
-                                        checked={newWallpaper.isNew}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, isNew: e.target.checked })}
-                                    />
-                                    <span className="text-sm font-medium text-slate-700">สินค้ามาใหม่ (New)</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 rounded border-slate-300 text-gold-primary focus:ring-gold-primary"
-                                        checked={newWallpaper.isOffering}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, isOffering: e.target.checked })}
-                                    />
-                                    <span className="text-sm font-medium text-slate-700">ของถวาย (Offering)</span>
-                                </label>
-                            </div>
-
-                            {newWallpaper.isOffering && (
-                                <div className="space-y-1 animate-in slide-in-from-top duration-300">
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ของถวายสำหรับวอลเปเปอร์หลัก</label>
-                                    <select
-                                        className="w-full p-3 rounded-xl bg-orange-50 border-none ring-1 ring-orange-200 outline-none text-sm"
-                                        value={newWallpaper.relatedWallpaperId}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, relatedWallpaperId: e.target.value })}
-                                        required={newWallpaper.isOffering}
+                            {/* Content Blocks Section */}
+                            <div className="border-t border-slate-200 pt-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 uppercase">เนื้อหาเพิ่มเติม (Content Blocks)</label>
+                                        <p className="text-xs text-slate-400">เพิ่มรูปภาพและข้อความบรรยายเพิ่มเติมให้กับวอลเปเปอร์</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={addContentBlock}
+                                        className="text-xs font-bold bg-gold-primary text-white hover:bg-gold-secondary px-3 py-2 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
                                     >
-                                        <option value="">เลือกวอลเปเปอร์หลัก</option>
-                                        {wallpapers.filter((w: any) => !w.isOffering).map((wp: any) => (
-                                            <option key={wp.id} value={wp.id}>{wp.title}</option>
-                                        ))}
-                                    </select>
-                                    <p className="text-[10px] text-orange-400 ml-1 italic">* กรุณาเลือกวอลเปเปอร์หลักที่ของถวายชิ้นนี้จะนำไปใช้</p>
+                                        <Plus className="w-3 h-3" /> เพิ่มรูปภาพ/ข้อความ
+                                    </button>
                                 </div>
-                            )}
+
+                                <div className="space-y-6">
+                                    {contentBlocks.map((block, index) => (
+                                        <div key={block.id || index} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 relative group animate-in slide-in-from-left duration-300">
+                                            <div className="absolute -top-3 -right-3 bg-white rounded-full p-1 shadow-md border border-slate-100 z-10 transition-transform hover:scale-110">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeContentBlock(index)}
+                                                    className="text-slate-300 hover:text-red-500 bg-white rounded-full p-1"
+                                                    title="ลบรายการนี้"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+
+                                            <div className="grid grid-cols-12 gap-6">
+                                                {/* Image Upload Column */}
+                                                <div className="col-span-12 md:col-span-4 space-y-3">
+                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase">รูปภาพ</label>
+                                                    <div className="w-full aspect-[3/4] bg-white rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden relative transition-colors hover:bg-slate-50 hover:border-gold-primary/30">
+                                                        {(block.previewUrl || block.imageUrl || (block.imageFile && URL.createObjectURL(block.imageFile))) ? (
+                                                            <>
+                                                                <img
+                                                                    src={block.imageUrl || (block.imageFile ? URL.createObjectURL(block.imageFile) : null)}
+                                                                    alt="Block"
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                                {/* Text Overlay Preview */}
+                                                                {block.text && (
+                                                                    <div
+                                                                        className={`absolute w-full p-4 text-center pointer-events-none break-words z-10 leading-relaxed`}
+                                                                        style={{
+                                                                            color: block.textColor,
+                                                                            fontFamily: block.fontFamily === 'kanit' ? 'var(--font-kanit)' : block.fontFamily,
+                                                                            fontSize: block.textSize === 'xs' ? '0.75rem' : block.textSize === 'sm' ? '0.875rem' : block.textSize === 'lg' ? '1.125rem' : block.textSize === 'xl' ? '1.25rem' : block.textSize === '2xl' ? '1.5rem' : '1rem',
+                                                                            bottom: block.textPosition === 'bottom' ? 0 : 'auto',
+                                                                            left: 0, right: 0,
+                                                                            transform: block.textPosition === 'center' ? 'translateY(-50%)' : 'none',
+                                                                            top: block.textPosition === 'center' ? '50%' : (block.textPosition === 'top' ? 0 : 'auto'),
+                                                                        }}
+                                                                    >
+                                                                        {block.text}
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <div className="text-center p-4">
+                                                                <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                                                <span className="text-xs text-slate-400 block">คลิกเพื่อเลือกรูปภาพ</span>
+                                                            </div>
+                                                        )}
+                                                        <input
+                                                            type="file" accept="image/*"
+                                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    updateContentBlock(index, 'imageFile', file);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Settings Column */}
+                                                <div className="col-span-12 md:col-span-8 space-y-4">
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">ข้อความบรรยาย (Optional)</label>
+                                                        <textarea
+                                                            rows={3}
+                                                            placeholder="พิมพ์ข้อความที่ต้องการแสดง..."
+                                                            className="w-full p-3 rounded-xl bg-white border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm resize-none"
+                                                            value={block.text}
+                                                            onChange={(e) => updateContentBlock(index, 'text', e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">ตำแหน่งข้อความ</label>
+                                                            <select
+                                                                className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
+                                                                value={block.textPosition}
+                                                                onChange={(e) => updateContentBlock(index, 'textPosition', e.target.value)}
+                                                            >
+                                                                <option value="center">ตรงกลางภาพ (Center)</option>
+                                                                <option value="top">ด้านบนภาพ (Top)</option>
+                                                                <option value="bottom">ด้านล่างภาพ (Bottom)</option>
+                                                            </select>
+                                                            <p className="text-[10px] text-slate-400 mt-1">* ตำแหน่งบนภาพจริง</p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">รูปแบบฟอนต์</label>
+                                                            <select
+                                                                className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
+                                                                value={block.fontFamily}
+                                                                onChange={(e) => updateContentBlock(index, 'fontFamily', e.target.value)}
+                                                            >
+                                                                <option value="sans">ค่าเริ่มต้น (Sans-serif)</option>
+                                                                <option value="serif">แบบมีเชิง (Serif - หรูหรา)</option>
+                                                                <option value="mono">พิมพ์ดีด (Monospace)</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">สีตัวอักษร</label>
+                                                            <div className="flex items-center gap-2 p-1 bg-white rounded-xl border border-slate-200">
+                                                                <input
+                                                                    type="color"
+                                                                    className="w-8 h-8 rounded-lg border-none cursor-pointer p-0"
+                                                                    value={block.textColor}
+                                                                    onChange={(e) => updateContentBlock(index, 'textColor', e.target.value)}
+                                                                />
+                                                                <span className="text-xs font-mono text-slate-500 uppercase">{block.textColor}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">ขนาดตัวอักษร</label>
+                                                            <select
+                                                                className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
+                                                                value={block.textSize}
+                                                                onChange={(e) => updateContentBlock(index, 'textSize', e.target.value)}
+                                                            >
+                                                                <option value="xs">เล็กมาก (XS)</option>
+                                                                <option value="sm">เล็ก (SM)</option>
+                                                                <option value="base">ปกติ (Base)</option>
+                                                                <option value="lg">ใหญ่ (LG)</option>
+                                                                <option value="xl">ใหญ่พิเศษ (XL)</option>
+                                                                <option value="2xl">มหึมา (2XL)</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {contentBlocks.length === 0 && (
+                                        <div className="text-center py-8 bg-slate-50/50 border border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-2">
+                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
+                                                <ImageIcon className="w-5 h-5" />
+                                            </div>
+                                            <p className="text-slate-400 text-sm">ยังไม่มีรูปภาพเพิ่มเติม</p>
+                                            <button
+                                                type="button"
+                                                onClick={addContentBlock}
+                                                className="text-xs font-bold text-gold-primary hover:underline mt-1"
+                                            >
+                                                + เพิ่มรูปภาพตอนนี้
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
                             <div className="flex gap-3 pt-4">
                                 <button
@@ -1002,6 +1262,7 @@ export default function AdminDashboard() {
                                         setNewWallpaper({ title: '', description: '', imageUrl: '', categoryId: '', price: 1, blessing: '', deity: '', isPopular: false, isNew: false, isOffering: false, relatedWallpaperId: '' });
                                         setSelectedFile(null);
                                         setPreviewUrl(null);
+                                        setContentBlocks([]);
                                     }}
                                     className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
                                 >

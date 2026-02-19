@@ -9,6 +9,9 @@ export async function GET(req: Request) {
             include: {
                 category: true,
                 offerings: true,
+                contents: {
+                    orderBy: { order: 'asc' }
+                },
             },
             orderBy: { createdAt: 'desc' },
         });
