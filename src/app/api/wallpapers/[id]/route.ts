@@ -6,7 +6,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     try {
         const wallpaper = await prisma.wallpaper.findUnique({
             where: { id: params.id },
-            include: { category: true }
+            include: {
+                category: true,
+                contents: {
+                    orderBy: { order: 'asc' }
+                }
+            }
         });
         if (!wallpaper) return NextResponse.json({ error: "Wallpaper not found" }, { status: 404 });
         return NextResponse.json(wallpaper);
@@ -23,6 +28,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     try {
         const contentType = req.headers.get('content-type') || '';
         let data: any = {};
+        let formData: FormData | null = null;
 
         if (contentType.includes('application/json')) {
             data = await req.json();
@@ -32,7 +38,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             delete data.createdAt;
             delete data.updatedAt;
         } else {
-            const formData = await req.formData();
+            // Read formData ONCE — the body stream can only be consumed once
+            formData = await req.formData();
             const title = formData.get('title') as string;
             const description = formData.get('description') as string;
             const categoryId = formData.get('categoryId') as string;
@@ -47,7 +54,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
             let imageUrl = formData.get('imageUrl') as string;
 
-            if (imageFile) {
+            if (imageFile && imageFile.size > 0) {
                 const bytes = await imageFile.arrayBuffer();
                 const buffer = Buffer.from(bytes);
 
@@ -72,7 +79,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                 isPopular,
                 isNew,
                 isOffering,
-                relatedWallpaperId: isOffering ? relatedWallpaperId : null
+                relatedWallpaperId: (isOffering && relatedWallpaperId) ? relatedWallpaperId : null
             };
         }
 
@@ -81,32 +88,28 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             data: data
         });
 
-        // Handle Content Blocks for PUT
-        if (!contentType.includes('application/json')) {
-            const formData = await req.formData();
+        // Handle Content Blocks for PUT (reuse the same formData from above)
+        if (formData) {
             const contentBlocksJson = formData.get('contentBlocks') as string;
 
             if (contentBlocksJson) {
                 try {
                     const blocks = JSON.parse(contentBlocksJson);
 
-                    // Delete existing blocks to replace them (simplest strategy to handle order/deletes)
-                    // We need to transaction this ideally, but for now sequential is fine.
+                    // Delete existing blocks to replace them
                     await prisma.wallpaperContent.deleteMany({
                         where: { wallpaperId: params.id }
                     });
 
                     const uploadDir = join(process.cwd(), 'public', 'uploads', 'wallpapers');
-                    // Ensure dir exists (it might not if only textual updates)
                     await mkdir(uploadDir, { recursive: true });
 
                     for (let i = 0; i < blocks.length; i++) {
                         const block = blocks[i];
-                        // Frontend sends contentImage_0, contentImage_1 etc. corresponding to the array index
                         const contentImageFile = formData.get(`contentImage_${i}`) as File | null;
                         let contentImageUrl = block.imageUrl; // Use existing URL if no new file
 
-                        if (contentImageFile) {
+                        if (contentImageFile && contentImageFile.size > 0) {
                             const cBytes = await contentImageFile.arrayBuffer();
                             const cBuffer = Buffer.from(cBytes);
                             const cFilename = `${Date.now()}_block_${i}_${contentImageFile.name.replace(/\s+/g, '-')}`;

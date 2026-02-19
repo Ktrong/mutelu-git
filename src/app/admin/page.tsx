@@ -714,6 +714,7 @@ export default function AdminDashboard() {
                                                                 isOffering: wp.isOffering,
                                                                 relatedWallpaperId: wp.relatedWallpaperId || ''
                                                             });
+                                                            setEditingWallpaper(wp);
                                                             setPreviewUrl(wp.imageUrl);
                                                             // Populate content blocks from existing data
                                                             if (wp.contents && Array.isArray(wp.contents)) {
@@ -1119,7 +1120,7 @@ export default function AdminDashboard() {
                                                         {(block.previewUrl || block.imageUrl || (block.imageFile && URL.createObjectURL(block.imageFile))) ? (
                                                             <>
                                                                 <img
-                                                                    src={block.imageUrl || (block.imageFile ? URL.createObjectURL(block.imageFile) : null)}
+                                                                    src={block.imageFile ? URL.createObjectURL(block.imageFile) : block.imageUrl}
                                                                     alt="Block"
                                                                     className="w-full h-full object-cover"
                                                                 />

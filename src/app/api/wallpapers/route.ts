@@ -24,8 +24,10 @@ export async function GET(req: Request) {
         const wallpapers = await prisma.wallpaper.findMany({
             where,
             include: {
-                category: true
-                // relatedWallpaper: true  // Temporarily disabled until Prisma client regenerated
+                category: true,
+                contents: {
+                    orderBy: { order: 'asc' }
+                }
             },
             orderBy: { createdAt: 'desc' }
         });
