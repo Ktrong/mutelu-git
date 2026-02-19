@@ -116,12 +116,12 @@ const HeroSection = () => {
     return (
         <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-cream group">
             {/* Dynamic Background */}
-            <div className="absolute inset-0 w-full h-full transition-colors duration-1000" style={{ backgroundColor: currentSlide.bgColor || '#FEF9E7' }}>
+            <div className="absolute inset-0 w-full h-full transition-colors duration-1000" style={{ backgroundColor: currentSlide?.bgColor || '#FEF9E7' }}>
                 {/* Background Image if exists */}
-                {currentSlide.imageUrl && (
+                {currentSlide?.imageUrl && (
                     <div className="absolute inset-0">
                         <Image
-                            src={currentSlide.imageUrl}
+                            src={currentSlide?.imageUrl}
                             alt="Background"
                             fill
                             className="object-cover"
@@ -140,12 +140,12 @@ const HeroSection = () => {
                         Featured
                     </span>
                     <span className="px-3 text-xs font-medium text-gray-600">
-                        {currentSlide.subtitle || "ปลดล็อกพลังศักดิ์สิทธิ์ต้อนรับปี 2567"}
+                        {currentSlide?.subtitle || "ปลดล็อกพลังศักดิ์สิทธิ์ต้อนรับปี 2567"}
                     </span>
                 </div>
 
                 <h1 className="text-5xl md:text-7xl font-sarabun font-bold text-gray-900 mb-6 tracking-tight leading-tight">
-                    {currentSlide.title}
+                    {currentSlide?.title}
                     {/* Add Sparkles only if it's the first slide or consistently? Let's add consistently */}
                     <span className="gold-text relative inline-block ml-2">
                         <Sparkles className="absolute -top-6 -right-8 text-gold w-8 h-8 animate-bounce" />
@@ -154,14 +154,14 @@ const HeroSection = () => {
 
                 {/* Subtitle from DB or default */}
                 <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto font-light leading-relaxed">
-                    {currentSlide.subtitle || "ค้นพบวอลเปเปอร์มงคลพรีเมียมที่ออกแบบมาเพื่อสมดุลพลังงานของคุณ ความเชื่อที่ทันสมัยผสานกับการออกแบบที่หรูหรา"}
+                    {currentSlide?.subtitle || "ค้นพบวอลเปเปอร์มงคลพรีเมียมที่ออกแบบมาเพื่อสมดุลพลังงานของคุณ ความเชื่อที่ทันสมัยผสานกับการออกแบบที่หรูหรา"}
                 </p>
 
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
-                    <Link href={currentSlide.wallpaperId ? `/order?id=${currentSlide.wallpaperId}` : "/order"}>
+                    <Link href={currentSlide?.wallpaperId ? `/order?id=${currentSlide.wallpaperId}` : "/order"}>
                         <button className="px-8 py-4 bg-gold hover:bg-gold-dark text-white font-bold rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto flex items-center justify-center gap-2">
                             <Moon size={20} />
-                            {currentSlide.buttonText || "สั่งซื้อเลย"}
+                            {currentSlide?.buttonText || "สั่งซื้อเลย"}
                         </button>
                     </Link>
                 </div>

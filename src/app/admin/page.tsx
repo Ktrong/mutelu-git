@@ -76,16 +76,25 @@ export default function AdminDashboard() {
     });
 
     useEffect(() => {
-        const adminUser = localStorage.getItem('adminUser');
-        if (!adminUser) {
-            router.push('/admin/login');
-        } else {
-            const user = JSON.parse(adminUser);
-            if (!user.isAdmin) {
+        // ตรวจสอบว่าอยู่บน client-side เท่านั้น
+        if (typeof window !== 'undefined') {
+            const adminUser = localStorage.getItem('adminUser');
+            if (!adminUser) {
                 router.push('/admin/login');
             } else {
-                setIsAuthenticating(false);
-                fetchData();
+                try {
+                    const user = JSON.parse(adminUser);
+                    if (!user || !user.isAdmin) {
+                        router.push('/admin/login');
+                    } else {
+                        setIsAuthenticating(false);
+                        fetchData();
+                    }
+                } catch (error) {
+                    console.error('Invalid admin user data:', error);
+                    localStorage.removeItem('adminUser');
+                    router.push('/admin/login');
+                }
             }
         }
     }, [router]);

@@ -28,8 +28,8 @@ export default function NewArrivals() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     {isLoading ? (
                         [1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)
-                    ) : (
-                        wallpapers?.slice(0, 4).map((product: any) => (
+                    ) : Array.isArray(wallpapers) && wallpapers.length > 0 ? (
+                        wallpapers.slice(0, 4).map((product: any) => (
                             <ProductCard
                                 key={product.id}
                                 id={product.id}
@@ -39,6 +39,8 @@ export default function NewArrivals() {
                                 category={product.category?.name || "New"}
                             />
                         ))
+                    ) : (
+                        [1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)
                     )}
                     {!isLoading && (!wallpapers || wallpapers.length === 0) && (
                         <div className="col-span-full text-center py-10 text-gray-500">
