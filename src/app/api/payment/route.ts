@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-const omise = require('omise')({
+import Omise from 'omise';
+
+const omise = Omise({
     publicKey: process.env.OMISE_PUBLIC_KEY,
     secretKey: process.env.OMISE_SECRET_KEY,
 });
