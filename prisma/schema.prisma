@@ -32,6 +32,8 @@ model User {
   downloads     Download[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@map("user")
 }
 
 model Wallpaper {
@@ -60,6 +62,8 @@ model Wallpaper {
   customOrders  CustomOrder[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@map("wallpaper")
 }
 
 model Category {
@@ -74,6 +78,8 @@ model Category {
   tooltip       String?
   order         Int         @default(0)
   wallpapers    Wallpaper[]
+
+  @@map("category")
 }
 
 model Order {
@@ -86,6 +92,8 @@ model Order {
   paymentType   String      // "QR_PROMPTPAY", "CREDIT_CARD"
   paymentRef    String?     @unique
   createdAt     DateTime    @default(now())
+
+  @@map("order")
 }
 
 model Download {
@@ -97,6 +105,8 @@ model Download {
   customText    String?
   generatedUrl  String?
   createdAt     DateTime  @default(now())
+
+  @@map("download")
 }
 
 model Article {
@@ -106,6 +116,8 @@ model Article {
   author        String?
   publishedAt   DateTime?
   createdAt     DateTime  @default(now())
+
+  @@map("article")
 }
 
 model Slideshow {
@@ -121,6 +133,8 @@ model Slideshow {
   order         Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@map("slideshow")
 }
 
 model CustomOrder {
@@ -140,6 +154,8 @@ model CustomOrder {
   paymentStatus String      @default("UNPAID")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  @@map("customorder")
 }
 
 

@@ -36,7 +36,8 @@ const FilterableImageGrid = () => {
     }
 
     // Prepare categories list with "All" option
-    const allCategories = [{ id: 'All', name: 'ทั้งหมด' }, ...(categories || [])];
+    const categoriesList = Array.isArray(categories) ? categories : [];
+    const allCategories = [{ id: 'All', name: 'ทั้งหมด' }, ...categoriesList];
 
     return (
         <section className="py-16 bg-cream-light/50" id="products">
@@ -55,8 +56,8 @@ const FilterableImageGrid = () => {
                             key={category.id}
                             onClick={() => setSelectedCategoryId(category.id)}
                             className={`px-6 py-2 rounded-full text-sm font-sarabun font-medium transition-all duration-300 ${selectedCategoryId === category.id
-                                    ? "bg-gold text-white shadow-md transform scale-105"
-                                    : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                                ? "bg-gold text-white shadow-md transform scale-105"
+                                : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
                                 }`}
                         >
                             {category.name}
