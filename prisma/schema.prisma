@@ -42,6 +42,7 @@ model Wallpaper {
   isPopular          Boolean            @default(false)
   isOffering         Boolean            @default(false)
   relatedWallpaperId String?
+  downloadUrl        String?            // High-quality file for customers to download
   customOrders       CustomOrder[]
   downloads          Download[]
   slideshows         Slideshow[]

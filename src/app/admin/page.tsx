@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy } from 'lucide-react';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -36,9 +36,11 @@ export default function AdminDashboard() {
         isPopular: false,
         isNew: false,
         isOffering: false,
-        relatedWallpaperId: ''
+        relatedWallpaperId: '',
+        downloadUrl: ''
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [selectedDownloadFile, setSelectedDownloadFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     // Content Blocks State
@@ -66,6 +68,35 @@ export default function AdminDashboard() {
     const updateContentBlock = (index: number, field: string, value: any) => {
         const newBlocks = [...contentBlocks];
         newBlocks[index] = { ...newBlocks[index], [field]: value };
+        setContentBlocks(newBlocks);
+    };
+
+    const moveContentBlockUp = (index: number) => {
+        if (index === 0) return;
+        const newBlocks = [...contentBlocks];
+        const temp = newBlocks[index];
+        newBlocks[index] = newBlocks[index - 1];
+        newBlocks[index - 1] = temp;
+        setContentBlocks(newBlocks);
+    };
+
+    const moveContentBlockDown = (index: number) => {
+        if (index === contentBlocks.length - 1) return;
+        const newBlocks = [...contentBlocks];
+        const temp = newBlocks[index];
+        newBlocks[index] = newBlocks[index + 1];
+        newBlocks[index + 1] = temp;
+        setContentBlocks(newBlocks);
+    };
+
+    const duplicateContentBlock = (index: number) => {
+        const blockToDuplicate = contentBlocks[index];
+        const newBlock = {
+            ...blockToDuplicate,
+            id: Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5),
+        };
+        const newBlocks = [...contentBlocks];
+        newBlocks.splice(index + 1, 0, newBlock);
         setContentBlocks(newBlocks);
     };
 
@@ -206,6 +237,12 @@ export default function AdminDashboard() {
                 return;
             }
 
+            if (selectedDownloadFile) {
+                formData.append('downloadFile', selectedDownloadFile);
+            } else if (editingWallpaper && newWallpaper.downloadUrl) {
+                formData.append('downloadUrl', newWallpaper.downloadUrl);
+            }
+
             if (editingWallpaper) {
                 formData.append('imageUrl', newWallpaper.imageUrl);
             }
@@ -240,8 +277,9 @@ export default function AdminDashboard() {
                 setShowAddModal(false);
                 setEditingWallpaper(null);
                 fetchData();
-                setNewWallpaper({ title: '', description: '', imageUrl: '', categoryId: '', price: 1, blessing: '', deity: '', isPopular: false, isNew: false, isOffering: false, relatedWallpaperId: '' });
+                setNewWallpaper({ title: '', description: '', imageUrl: '', categoryId: '', price: 1, blessing: '', deity: '', isPopular: false, isNew: false, isOffering: false, relatedWallpaperId: '', downloadUrl: '' });
                 setSelectedFile(null);
+                setSelectedDownloadFile(null);
                 setPreviewUrl(null);
                 setContentBlocks([]);
             }
@@ -705,6 +743,7 @@ export default function AdminDashboard() {
                                                                 title: wp.title,
                                                                 description: wp.description || '',
                                                                 imageUrl: wp.imageUrl,
+                                                                downloadUrl: wp.downloadUrl || '',
                                                                 categoryId: wp.categoryId,
                                                                 price: wp.price,
                                                                 blessing: wp.blessing || '',
@@ -1008,7 +1047,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปภาพวอลเปเปอร์</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปภาพวอลเปเปอร์ (Preview)</label>
                                 <div className="space-y-3">
                                     {previewUrl && (
                                         <div className="w-24 h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
@@ -1026,6 +1065,28 @@ export default function AdminDashboard() {
                                             }
                                         }}
                                     />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 text-gold-primary">ไฟล์วอลเปเปอร์สำหรับดาวน์โหลด (High Quality)</label>
+                                <div className="space-y-2">
+                                    {newWallpaper.downloadUrl && !selectedDownloadFile && (
+                                        <div className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg inline-block">
+                                            ✓ มีไฟล์ชุดดาวน์โหลดเดิมแล้ว
+                                        </div>
+                                    )}
+                                    <input
+                                        type="file"
+                                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setSelectedDownloadFile(file);
+                                            }
+                                        }}
+                                    />
+                                    <p className="text-[10px] text-slate-400">* ไฟล์นี้สำหรับให้ลูกค้าดาวน์โหลดหลังชำระเงิน (ควรใช้ไฟล์ความละเอียดสูง)</p>
                                 </div>
                             </div>
 
@@ -1101,15 +1162,49 @@ export default function AdminDashboard() {
                                 <div className="space-y-6">
                                     {contentBlocks.map((block, index) => (
                                         <div key={block.id || index} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 relative group animate-in slide-in-from-left duration-300">
-                                            <div className="absolute -top-3 -right-3 bg-white rounded-full p-1 shadow-md border border-slate-100 z-10 transition-transform hover:scale-110">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeContentBlock(index)}
-                                                    className="text-slate-300 hover:text-red-500 bg-white rounded-full p-1"
-                                                    title="ลบรายการนี้"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
+                                            {/* Block Header with Controls */}
+                                            <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                        เนื้อหาชิ้นที่ {index + 1}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => moveContentBlockUp(index)}
+                                                        disabled={index === 0}
+                                                        className="p-1.5 text-slate-400 hover:text-gold-primary hover:bg-white rounded-lg transition-colors disabled:opacity-30 disabled:hover:text-slate-400"
+                                                        title="เลื่อนขึ้น"
+                                                    >
+                                                        <ArrowUp className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => moveContentBlockDown(index)}
+                                                        disabled={index === contentBlocks.length - 1}
+                                                        className="p-1.5 text-slate-400 hover:text-gold-primary hover:bg-white rounded-lg transition-colors disabled:opacity-30 disabled:hover:text-slate-400"
+                                                        title="เลื่อนลง"
+                                                    >
+                                                        <ArrowDown className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => duplicateContentBlock(index)}
+                                                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-white rounded-lg transition-colors"
+                                                        title="คัดลอก"
+                                                    >
+                                                        <Copy className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeContentBlock(index)}
+                                                        className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-white rounded-lg transition-colors ml-1"
+                                                        title="ลบรายการนี้"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <div className="grid grid-cols-12 gap-6">
@@ -1260,7 +1355,7 @@ export default function AdminDashboard() {
                                     onClick={() => {
                                         setShowAddModal(false);
                                         setEditingWallpaper(null);
-                                        setNewWallpaper({ title: '', description: '', imageUrl: '', categoryId: '', price: 1, blessing: '', deity: '', isPopular: false, isNew: false, isOffering: false, relatedWallpaperId: '' });
+                                        setNewWallpaper({ title: '', description: '', imageUrl: '', categoryId: '', price: 1, blessing: '', deity: '', isPopular: false, isNew: false, isOffering: false, relatedWallpaperId: '', downloadUrl: '' });
                                         setSelectedFile(null);
                                         setPreviewUrl(null);
                                         setContentBlocks([]);

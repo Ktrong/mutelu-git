@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
 // GET a single wallpaper
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -19,9 +21,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
-
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 
 // PUT (Update) a wallpaper
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
@@ -51,27 +50,39 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             const isOffering = formData.get('isOffering') === 'true';
             const relatedWallpaperId = formData.get('relatedWallpaperId') as string | null;
             const imageFile = formData.get('image') as File | null;
+            const downloadFile = formData.get('downloadFile') as File | null;
 
             let imageUrl = formData.get('imageUrl') as string;
+            let downloadUrl = formData.get('downloadUrl') as string;
+
+            const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'wallpapers');
+            const downloadDir = path.join(process.cwd(), 'public', 'uploads', 'downloads');
+            await mkdir(uploadDir, { recursive: true });
+            await mkdir(downloadDir, { recursive: true });
 
             if (imageFile && imageFile.size > 0) {
                 const bytes = await imageFile.arrayBuffer();
                 const buffer = Buffer.from(bytes);
-
-                const uploadDir = join(process.cwd(), 'public', 'uploads', 'wallpapers');
-                await mkdir(uploadDir, { recursive: true });
-
                 const filename = `${Date.now()}_${imageFile.name}`;
-                const path = join(uploadDir, filename);
-
-                await writeFile(path, buffer);
+                const pathStr = path.join(uploadDir, filename);
+                await writeFile(pathStr, buffer);
                 imageUrl = `/uploads/wallpapers/${filename}`;
+            }
+
+            if (downloadFile && downloadFile.size > 0) {
+                const dBytes = await downloadFile.arrayBuffer();
+                const dBuffer = Buffer.from(dBytes);
+                const dFilename = `${Date.now()}-hq-${downloadFile.name.replace(/\s+/g, '-')}`;
+                const dPath = path.join(downloadDir, dFilename);
+                await writeFile(dPath, dBuffer);
+                downloadUrl = `/uploads/downloads/${dFilename}`;
             }
 
             data = {
                 title,
                 description,
                 imageUrl,
+                downloadUrl,
                 categoryId,
                 price,
                 blessing,
@@ -101,7 +112,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                         where: { wallpaperId: params.id }
                     });
 
-                    const uploadDir = join(process.cwd(), 'public', 'uploads', 'wallpapers');
+                    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'wallpapers');
                     await mkdir(uploadDir, { recursive: true });
 
                     for (let i = 0; i < blocks.length; i++) {
@@ -113,7 +124,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                             const cBytes = await contentImageFile.arrayBuffer();
                             const cBuffer = Buffer.from(cBytes);
                             const cFilename = `${Date.now()}_block_${i}_${contentImageFile.name.replace(/\s+/g, '-')}`;
-                            const cPath = join(uploadDir, cFilename);
+                            const cPath = path.join(uploadDir, cFilename);
                             await writeFile(cPath, cBuffer);
                             contentImageUrl = `/uploads/wallpapers/${cFilename}`;
                         }

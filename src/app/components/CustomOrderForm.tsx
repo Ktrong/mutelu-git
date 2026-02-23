@@ -205,8 +205,37 @@ export default function CustomOrderForm() {
 
     return (
         <div className="max-w-md mx-auto p-6 rounded-[2.5rem] bg-gradient-to-br from-[#FFF5F7] via-[#FFF9F2] to-[#F2FCFF] shadow-xl font-sans text-[#4A4A4A]">
-            <h2 className="text-center text-xl font-bold mb-6 text-slate-800">รายละเอียดการสั่งซื้อ</h2>
+            {/* Additional Content Blocks (Moved to top as requested) */}
+            {selectedWp && (selectedWp as any).contents && (selectedWp as any).contents.length > 0 && (
+                <div className="mb-6 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase text-center tracking-widest mb-1">รายละเอียดเพิ่มเติม</h4>
+                    {(selectedWp as any).contents.map((block: any, index: number) => (
+                        <div key={block.id || index} className="relative rounded-3xl overflow-hidden shadow-lg border-2 border-white bg-white">
+                            <img src={block.imageUrl} alt="" className="w-full h-auto object-cover block" />
+                            {block.text && (
+                                <div
+                                    className={`absolute w-full p-4 text-center pointer-events-none break-words z-10 leading-relaxed`}
+                                    style={{
+                                        color: block.textColor,
+                                        fontFamily: block.fontFamily === 'kanit' ? 'var(--font-kanit)' : block.fontFamily,
+                                        fontSize: block.textSize === 'xs' ? '0.75rem' : block.textSize === 'sm' ? '0.875rem' : block.textSize === 'lg' ? '1.125rem' : block.textSize === 'xl' ? '1.25rem' : block.textSize === '2xl' ? '1.5rem' : '1rem',
+                                        bottom: block.textPosition === 'bottom' ? 0 : 'auto',
+                                        left: 0, right: 0,
+                                        transform: block.textPosition === 'center' ? 'translateY(-50%)' : 'none',
+                                        top: block.textPosition === 'center' ? '50%' : (block.textPosition === 'top' ? 0 : 'auto'),
+                                        textShadow: '0 2px 8px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.5)'
+                                    }}
+                                >
+                                    {block.text}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-4" />
+                </div>
+            )}
 
+            <h2 className="text-center text-xl font-bold mb-6 text-slate-800">รายละเอียดการสั่งซื้อ</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Selected Wallpaper Display */}
@@ -265,34 +294,6 @@ export default function CustomOrderForm() {
                             </div>
                         )}
 
-                        {/* Additional Content Blocks */}
-                        {(selectedWp as any).contents && (selectedWp as any).contents.length > 0 && (
-                            <div className="pt-4 border-t border-white/50 space-y-4">
-                                <h4 className="text-xs font-bold text-slate-700 uppercase px-1">รายละเอียดเพิ่มเติม</h4>
-                                {(selectedWp as any).contents.map((block: any, index: number) => (
-                                    <div key={block.id || index} className="relative rounded-xl overflow-hidden shadow-sm bg-white">
-                                        <img src={block.imageUrl} alt="" className="w-full h-auto object-cover block" />
-                                        {block.text && (
-                                            <div
-                                                className={`absolute w-full p-4 text-center pointer-events-none break-words z-10 leading-relaxed`}
-                                                style={{
-                                                    color: block.textColor,
-                                                    fontFamily: block.fontFamily === 'kanit' ? 'var(--font-kanit)' : block.fontFamily,
-                                                    fontSize: block.textSize === 'xs' ? '0.75rem' : block.textSize === 'sm' ? '0.875rem' : block.textSize === 'lg' ? '1.125rem' : block.textSize === 'xl' ? '1.25rem' : block.textSize === '2xl' ? '1.5rem' : '1rem',
-                                                    bottom: block.textPosition === 'bottom' ? 0 : 'auto',
-                                                    left: 0, right: 0,
-                                                    transform: block.textPosition === 'center' ? 'translateY(-50%)' : 'none',
-                                                    top: block.textPosition === 'center' ? '50%' : (block.textPosition === 'top' ? 0 : 'auto'),
-                                                    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                                                }}
-                                            >
-                                                {block.text}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 )}
 

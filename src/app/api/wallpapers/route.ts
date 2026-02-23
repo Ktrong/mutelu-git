@@ -52,32 +52,48 @@ export async function POST(req: Request) {
         const isOffering = formData.get('isOffering') === 'true';
         const relatedWallpaperId = formData.get('relatedWallpaperId') as string | null;
         const file = formData.get('image') as File | null;
+        const downloadFile = formData.get('downloadFile') as File | null;
 
         if (!title || !categoryId || !file) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        // Save file
+        // Save preview file
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Create unique filename
-        const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+        // Create unique filenames
+        const timestamp = Date.now();
+        const filename = `${timestamp}-${file.name.replace(/\s+/g, '-')}`;
         const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'wallpapers');
+        const downloadDir = path.join(process.cwd(), 'public', 'uploads', 'downloads');
 
-        // Ensure directory exists
+        // Ensure directories exist
         await mkdir(uploadDir, { recursive: true });
+        await mkdir(downloadDir, { recursive: true });
 
         const filePath = path.join(uploadDir, filename);
         await writeFile(filePath, buffer);
 
         const imageUrl = `/uploads/wallpapers/${filename}`;
 
+        // Save high-quality download file if provided
+        let downloadUrl = null;
+        if (downloadFile && downloadFile.size > 0) {
+            const dBytes = await downloadFile.arrayBuffer();
+            const dBuffer = Buffer.from(dBytes);
+            const dFilename = `${timestamp}-hq-${downloadFile.name.replace(/\s+/g, '-')}`;
+            const dPath = path.join(downloadDir, dFilename);
+            await writeFile(dPath, dBuffer);
+            downloadUrl = `/uploads/downloads/${dFilename}`;
+        }
+
         const newWallpaper = await prisma.wallpaper.create({
             data: {
                 title,
                 description,
                 imageUrl,
+                downloadUrl,
                 categoryId,
                 price,
                 blessing,
