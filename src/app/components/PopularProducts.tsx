@@ -36,6 +36,7 @@ export default function PopularProducts() {
                                     price={product.price}
                                     image={product.imageUrl}
                                     category={product.category?.name || "Popular"}
+                                    isOffering={product.isOffering}
                                 />
                             ))
                         ) : (

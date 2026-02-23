@@ -8,11 +8,12 @@ interface ProductCardProps {
     price: number;
     image: string;
     category: string;
+    isOffering?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ id, title, price, image, category }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ id, title, price, image, category, isOffering = false }) => {
     return (
-        <div className="group relative bg-white rounded-2xl overflow-hidden card-shadow transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+        <div className="group relative bg-white rounded-2xl overflow-hidden card-shadow transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full">
             {/* Image Container */}
             <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
                 {/* Placeholder for actual image if src is empty or error */}
@@ -29,9 +30,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, title, price, image, cate
                     <button className="p-2 bg-white rounded-full shadow-md text-gray-600 hover:text-red-500 hover:scale-110 transition-all">
                         <Heart size={18} />
                     </button>
-                    <button className="p-2 bg-white rounded-full shadow-md text-gray-600 hover:text-gold hover:scale-110 transition-all">
+                    <Link href={isOffering ? '#' : `/order?id=${id}`} className="p-2 bg-white rounded-full shadow-md text-gray-600 hover:text-gold hover:scale-110 transition-all">
                         <ShoppingBag size={18} />
-                    </button>
+                    </Link>
                 </div>
 
                 {/* Category Tag */}
@@ -43,20 +44,34 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, title, price, image, cate
             </div>
 
             {/* Content */}
-            <div className="p-4">
+            <div className="p-4 flex flex-col flex-grow">
                 <h3 className="font-sarabun font-bold text-gray-800 text-lg mb-1 line-clamp-1 group-hover:text-gold-dark transition-colors">
                     <Link href={`/products/${id}`}>
                         {title}
                     </Link>
                 </h3>
-                <div className="flex justify-between items-center mt-2">
-                    <span className="text-gold-dark font-bold text-xl">
-                        ฿{price.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-gray-400 line-through">
-                        ฿{(price * 1.2).toLocaleString()}
-                    </span>
+                <div className="flex justify-between items-center mt-2 mb-4">
+                    <div className="flex flex-col">
+                        <span className="text-gold-dark font-bold text-xl">
+                            ฿{price.toLocaleString()}
+                        </span>
+                        <span className="text-[10px] text-gray-400 line-through">
+                            ฿{(price * 1.2).toLocaleString()}
+                        </span>
+                    </div>
                 </div>
+
+                {/* Order Button - Mirroring HeroSection style */}
+                {!isOffering && (
+                    <div className="mt-auto pt-2">
+                        <Link href={`/order?id=${id}`} className="block">
+                            <button className="w-full py-2.5 bg-gold hover:bg-gold-dark text-white text-sm font-bold rounded-full shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">
+                                <ShoppingBag size={16} />
+                                สั่งซื้อเลย
+                            </button>
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     );

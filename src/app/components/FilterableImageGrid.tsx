@@ -79,6 +79,7 @@ const FilterableImageGrid = () => {
                                     price={product.price}
                                     image={product.imageUrl}
                                     category={product.category?.name || "General"}
+                                    isOffering={product.isOffering}
                                 />
                             ))
                         ) : (

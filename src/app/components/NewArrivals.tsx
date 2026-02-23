@@ -37,6 +37,7 @@ export default function NewArrivals() {
                                 price={product.price}
                                 image={product.imageUrl}
                                 category={product.category?.name || "New"}
+                                isOffering={product.isOffering}
                             />
                         ))
                     ) : (
