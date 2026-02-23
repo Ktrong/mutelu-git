@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronDown, Check, CreditCard, QrCode } from 'lucide-react';
+import { ChevronDown, Check, CreditCard, QrCode, X, Download } from 'lucide-react';
+import PhoneMockup from './iPhoneMockup';
 
 declare const Omise: any;
 
@@ -12,6 +13,7 @@ interface Wallpaper {
     title: string;
     price: number;
     imageUrl: string;
+    downloadUrl?: string;
     offerings?: Wallpaper[];
 }
 
@@ -35,6 +37,7 @@ export default function CustomOrderForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState('');
     const [qrCodeUrl, setQrCodeUrl] = useState('');
+    const [showPreview, setShowPreview] = useState(false);
 
     useEffect(() => {
         const fetchWallpapers = async () => {
@@ -134,7 +137,8 @@ export default function CustomOrderForm() {
             const order = await orderRes.json();
             if (!orderRes.ok) throw new Error(order.error || 'Failed to create order');
 
-            // 2. Process Payment
+            // 2. Process Payment (Bypassed for debugging/demo)
+            /*
             let paymentPayload: any = {};
             try {
                 paymentPayload = await processPayment(order.id, totalAmount);
@@ -160,11 +164,17 @@ export default function CustomOrderForm() {
                     setQrCodeUrl(payData.download_uri);
                     setMessage('กรุณาสแกน QR Code ด้านบนเพื่อชำระเงิน');
                 } else {
-                    setMessage('สั่งซื้อและชำระเงินสำเร็จ! เราจะส่งงานให้คุณทางอีเมล');
+                    setMessage('สั่งซื้อสำเร็จ! ดูตัวอย่างวอลเปเปอร์ของคุณด้านล่าง');
+                    setShowPreview(true);
                 }
             } else {
                 setMessage(payData.error || 'การชำระเงินขัดข้อง');
             }
+            */
+
+            // Simulation of success for debugging
+            setMessage('สั่งซื้อสำเร็จ! ดูตัวอย่างวอลเปเปอร์ของคุณด้านล่าง');
+            setShowPreview(true);
         } catch (error: any) {
             setMessage(error.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
         }
@@ -432,13 +442,22 @@ export default function CustomOrderForm() {
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full bg-[#FFA048]/30 border-2 border-[#FFA048] py-3 rounded-2xl font-bold text-lg active:scale-[0.98] transition-all hover:bg-[#FFA048]/40 disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'กำลังดำเนินการ...' : (qrCodeUrl ? 'ตรวจสอบการชำระเงิน' : 'ตกลง')}
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setShowPreview(true)}
+                            className="bg-white border-2 border-slate-200 py-3 px-6 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
+                        >
+                            ดูตัวอย่าง
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex-1 bg-[#FFA048]/30 border-2 border-[#FFA048] py-3 rounded-2xl font-bold text-lg active:scale-[0.98] transition-all hover:bg-[#FFA048]/40 disabled:opacity-50"
+                        >
+                            {isSubmitting ? 'กำลังดำเนินการ...' : (qrCodeUrl ? 'ตรวจสอบการชำระเงิน' : 'ตกลง')}
+                        </button>
+                    </div>
 
                     {message && (
                         <p className={`text-center text-xs font-bold animate-pulse ${message.includes('สำเร็จ') ? 'text-green-600' : 'text-orange-500'}`}>
@@ -447,6 +466,55 @@ export default function CustomOrderForm() {
                     )}
                 </div>
             </form>
-        </div>
+
+            {/* Preview Modal Overlay */}
+            {showPreview && selectedWp && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
+                    <div className="relative w-full max-w-sm flex flex-col items-center gap-6 py-10">
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setShowPreview(false)}
+                            className="absolute top-0 right-0 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="text-center space-y-2 mb-2">
+                            <h3 className="text-white text-xl font-bold">วอลเปเปอร์ของคุณพร้อมแล้ว!</h3>
+                            <p className="text-white/60 text-xs">ตัวอย่างวอลเปเปอร์บนเครื่องผู้ใช้งาน</p>
+                        </div>
+
+                        {/* iPhone Mockup */}
+                        <div className="scale-[0.85] md:scale-100 origin-top">
+                            <PhoneMockup
+                                wallpaperUrl={selectedWp.downloadUrl || selectedWp.imageUrl}
+                                title={formData.displayedName || selectedWp.title}
+                                subtitle={selectedWp.title}
+                                dayOfWeek={formData.dayOfWeek}
+                                zodiac={formData.zodiac}
+                                showWatermark={true}
+                            />
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-3 w-full max-w-[280px]">
+                            <button
+                                onClick={() => setShowPreview(false)}
+                                className="w-full bg-gold-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-gold-primary/20 hover:bg-gold-primary/90 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                ตกลง
+                            </button>
+                            <button
+                                onClick={() => setShowPreview(false)}
+                                className="w-full bg-white/10 text-white font-bold py-3 rounded-2xl hover:bg-white/20 transition-all text-sm border border-white/10"
+                            >
+                                กลับหน้าหลัก
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
+            }
+        </div >
     );
 }
