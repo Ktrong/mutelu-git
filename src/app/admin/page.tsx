@@ -22,6 +22,9 @@ export default function AdminDashboard() {
     const [orders, setOrders] = useState<any[]>([]);
     const [editingOrder, setEditingOrder] = useState<any>(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
+    const [faqs, setFaqs] = useState<any[]>([]);
+    const [showFaqModal, setShowFaqModal] = useState(false);
+    const [editingFaq, setEditingFaq] = useState<any>(null);
     const [isAuthenticating, setIsAuthenticating] = useState(true);
 
     // Form state for Wallpaper
@@ -134,6 +137,18 @@ export default function AdminDashboard() {
         isActive: true
     });
 
+    // Form state for FAQ
+    const [newFaq, setNewFaq] = useState({
+        question: '',
+        answer: '',
+        questionColor: '#000000',
+        answerColor: '#4B5563',
+        questionSize: 'lg',
+        answerSize: 'base',
+        fontFamily: 'sans',
+        order: 0
+    });
+
     useEffect(() => {
         // ตรวจสอบว่าอยู่บน client-side เท่านั้น
         if (typeof window !== 'undefined') {
@@ -160,16 +175,18 @@ export default function AdminDashboard() {
 
     const fetchData = async () => {
         try {
-            const [wpRes, catRes, userRes, slideRes] = await Promise.all([
+            const [wpRes, catRes, userRes, slideRes, faqRes] = await Promise.all([
                 fetch('/api/wallpapers'),
                 fetch('/api/categories'),
                 fetch('/api/admin/users'),
-                fetch('/api/slideshows')
+                fetch('/api/slideshows'),
+                fetch('/api/faqs')
             ]);
             const wpData = await wpRes.json();
             const catData = await catRes.json();
             const userData = await userRes.json();
             const slideData = await slideRes.json();
+            const faqData = await faqRes.json();
             const orderRes = await fetch('/api/orders');
             const orderData = await orderRes.json();
 
@@ -177,6 +194,7 @@ export default function AdminDashboard() {
             setCategories(Array.isArray(catData) ? catData : []);
             setUsers(Array.isArray(userData) ? userData : []);
             setSlideshows(Array.isArray(slideData) ? slideData : []);
+            setFaqs(Array.isArray(faqData) ? faqData : []);
             setOrders(Array.isArray(orderData) ? orderData : []);
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -421,6 +439,47 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleSubmitFaq = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const url = editingFaq ? `/api/faqs/${editingFaq.id}` : '/api/faqs';
+            const method = editingFaq ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newFaq)
+            });
+            if (res.ok) {
+                setShowFaqModal(false);
+                setEditingFaq(null);
+                fetchData();
+                setNewFaq({
+                    question: '',
+                    answer: '',
+                    questionColor: '#000000',
+                    answerColor: '#4B5563',
+                    questionSize: 'lg',
+                    answerSize: 'base',
+                    fontFamily: 'sans',
+                    order: 0
+                });
+            }
+        } catch (error) {
+            console.error("Error saving FAQ:", error);
+        }
+    };
+
+    const handleDeleteFaq = async (id: string) => {
+        if (!confirm('ยืนยันการลบคำถามนี้?')) return;
+        try {
+            await fetch(`/api/faqs/${id}`, { method: 'DELETE' });
+            fetchData();
+        } catch (error) {
+            console.error("Error deleting FAQ:", error);
+        }
+    };
+
     if (isAuthenticating) return null;
 
     return (
@@ -468,6 +527,12 @@ export default function AdminDashboard() {
                         className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'orders' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
                     >
                         <ShoppingCart className="w-4 h-4" /> รายการสั่งซื้อ (Custom)
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('faqs')}
+                        className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'faqs' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
+                    >
+                        <Settings className="w-4 h-4" /> คำถามที่พบบ่อย (FAQs)
                     </button>
                 </nav>
 
@@ -965,6 +1030,99 @@ export default function AdminDashboard() {
                                             </td>
                                         </tr>
                                     ))}
+                                    {slideshows.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic">
+                                                ยังไม่มีข้อมูลสไลด์โชว์
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {activeTab === 'faqs' && (
+                    <>
+                        <header className="flex justify-between items-center mb-8">
+                            <h1 className="text-2xl font-bold text-slate-800">จัดการคำถามที่พบบ่อย (FAQs)</h1>
+                            <button
+                                onClick={() => setShowFaqModal(true)}
+                                className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+                            >
+                                <Plus className="w-4 h-4" /> เพิ่มคำถามใหม่
+                            </button>
+                        </header>
+
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <table className="w-full text-left font-sans">
+                                <thead className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <tr>
+                                        <th className="px-6 py-4">ลำดับ</th>
+                                        <th className="px-6 py-4">คำถาม</th>
+                                        <th className="px-6 py-4">คำตอบ</th>
+                                        <th className="px-6 py-4 text-right">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {faqs.map((faq: any) => (
+                                        <tr key={faq.id} className="text-sm hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4 font-bold text-slate-400">{faq.order}</td>
+                                            <td className="px-6 py-4">
+                                                <div
+                                                    style={{ color: faq.questionColor, fontSize: faq.questionSize === 'base' ? '14px' : faq.questionSize === 'lg' ? '18px' : '24px' }}
+                                                    className={`font-bold ${faq.fontFamily === 'sans' ? 'font-sans' : 'font-serif'}`}
+                                                >
+                                                    {faq.question}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div
+                                                    style={{ color: faq.answerColor, fontSize: faq.answerSize === 'base' ? '14px' : faq.answerSize === 'lg' ? '18px' : '24px' }}
+                                                    className={`${faq.fontFamily === 'sans' ? 'font-sans' : 'font-serif'} line-clamp-2`}
+                                                >
+                                                    {faq.answer}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingFaq(faq);
+                                                            setNewFaq({
+                                                                question: faq.question,
+                                                                answer: faq.answer,
+                                                                questionColor: faq.questionColor,
+                                                                answerColor: faq.answerColor,
+                                                                questionSize: faq.questionSize,
+                                                                answerSize: faq.answerSize,
+                                                                fontFamily: faq.fontFamily,
+                                                                order: faq.order
+                                                            });
+                                                            setShowFaqModal(true);
+                                                        }}
+                                                        className="p-2 text-slate-400 hover:text-gold-primary transition-colors"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteFaq(faq.id)}
+                                                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {faqs.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">
+                                                ยังไม่มีข้อมูลคำถาม
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -972,587 +1130,196 @@ export default function AdminDashboard() {
                 )}
             </main>
 
-            {/* Modal for adding wallpaper */}
-            {showAddModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
-                    <div className="bg-white w-full max-w-xl md:max-w-3xl lg:max-w-4xl rounded-[2.5rem] p-6 md:p-8 shadow-2xl animate-in zoom-in duration-300 max-h-[85vh] overflow-y-auto custom-scrollbar">
-                        <h2 className="text-xl font-bold text-slate-800 mb-6">
-                            {editingWallpaper ? 'แก้ไขข้อมูลวอลเปเปอร์' : 'เพิ่มวอลเปเปอร์ใหม่'}
-                        </h2>
-                        <form onSubmit={handleAddWallpaper} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+            {/* Modals... */}
+            {/* ... keeping other modals and adding FAQ Modal ... */}
+
+            {
+                showFaqModal && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ชื่อ</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                        value={newWallpaper.title}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, title: e.target.value })}
-                                    />
+                                    <h3 className="text-xl font-bold text-slate-800">{editingFaq ? 'แก้ไขคำถาม' : 'เพิ่มคำถามใหม่'}</h3>
+                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">FAQ Customization</p>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">หมวดหมู่</label>
-                                    <select
-                                        required
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                        value={newWallpaper.categoryId}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, categoryId: e.target.value })}
-                                    >
-                                        <option value="">เลือกหมวดหมู่</option>
-                                        {categories.map((cat: any) => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <button onClick={() => { setShowFaqModal(false); setEditingFaq(null); }} className="p-2 hover:bg-white rounded-full transition-colors shadow-sm ring-1 ring-slate-200">
+                                    <X className="w-5 h-5 text-slate-400" />
+                                </button>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำอธิบาย (Description)</label>
-                                <textarea
-                                    rows={3}
-                                    className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm resize-none"
-                                    value={newWallpaper.description}
-                                    onChange={(e) => setNewWallpaper({ ...newWallpaper, description: e.target.value })}
-                                />
-                            </div>
+                            <form onSubmit={handleSubmitFaq} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">คำถาม</label>
+                                        <input
+                                            type="text" required
+                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm focus:ring-slate-900 transition-all font-medium"
+                                            placeholder="เช่น มีวิธีดาวน์โหลดอย่างไร?"
+                                            value={newFaq.question}
+                                            onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">คำตอบ</label>
+                                        <textarea
+                                            required rows={4}
+                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm focus:ring-slate-900 transition-all font-medium"
+                                            placeholder="คำอธิบาย..."
+                                            value={newFaq.answer}
+                                            onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
+                                        />
+                                    </div>
 
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ราคา (เครดิต)</label>
-                                    <input
-                                        type="number" required min="1"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                        value={newWallpaper.price}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, price: parseInt(e.target.value) })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำอวยพร (Blessing)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                        value={newWallpaper.blessing}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, blessing: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">เทพเจ้า (Deity)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                        value={newWallpaper.deity}
-                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, deity: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปภาพวอลเปเปอร์ (Preview)</label>
-                                <div className="space-y-3">
-                                    {previewUrl && (
-                                        <div className="w-24 h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
-                                            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    <div className="p-4 bg-slate-50 rounded-2xl space-y-4">
+                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">สีข้อความ</h4>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] text-slate-500 mb-1">สีคำถาม</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input type="color" className="w-8 h-8 rounded-lg cursor-pointer border-none" value={newFaq.questionColor} onChange={(e) => setNewFaq({ ...newFaq, questionColor: e.target.value })} />
+                                                    <span className="text-xs font-mono">{newFaq.questionColor}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] text-slate-500 mb-1">สีคำตอบ</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input type="color" className="w-8 h-8 rounded-lg cursor-pointer border-none" value={newFaq.answerColor} onChange={(e) => setNewFaq({ ...newFaq, answerColor: e.target.value })} />
+                                                    <span className="text-xs font-mono">{newFaq.answerColor}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    )}
-                                    <input
-                                        type="file" accept="image/*" required={!editingWallpaper}
-                                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                setSelectedFile(file);
-                                                setPreviewUrl(URL.createObjectURL(file));
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            </div>
+                                    </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 text-gold-primary">ไฟล์วอลเปเปอร์สำหรับดาวน์โหลด (High Quality)</label>
-                                <div className="space-y-2">
-                                    {newWallpaper.downloadUrl && !selectedDownloadFile && (
-                                        <div className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg inline-block">
-                                            ✓ มีไฟล์ชุดดาวน์โหลดเดิมแล้ว
+                                    <div className="p-4 bg-slate-50 rounded-2xl space-y-4">
+                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ขนาดข้อความ</h4>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] text-slate-500 mb-1">คำถาม</label>
+                                                <select className="w-full p-2 rounded-lg bg-white border-none ring-1 ring-slate-200 outline-none text-xs" value={newFaq.questionSize} onChange={(e) => setNewFaq({ ...newFaq, questionSize: e.target.value })}>
+                                                    <option value="base">ปกติ</option>
+                                                    <option value="lg">ใหญ่</option>
+                                                    <option value="xl">ใหญ่พิเศษ</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] text-slate-500 mb-1">คำตอบ</label>
+                                                <select className="w-full p-2 rounded-lg bg-white border-none ring-1 ring-slate-200 outline-none text-xs" value={newFaq.answerSize} onChange={(e) => setNewFaq({ ...newFaq, answerSize: e.target.value })}>
+                                                    <option value="base">ปกติ</option>
+                                                    <option value="lg">ใหญ่</option>
+                                                    <option value="xl">ใหญ่พิเศษ</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                    )}
-                                    <input
-                                        type="file"
-                                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                setSelectedDownloadFile(file);
-                                            }
-                                        }}
-                                    />
-                                    <p className="text-[10px] text-slate-400">* ไฟล์นี้สำหรับให้ลูกค้าดาวน์โหลดหลังชำระเงิน (ควรใช้ไฟล์ความละเอียดสูง)</p>
-                                </div>
-                            </div>
+                                    </div>
 
-                            <div className="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">ตั้งค่าพิเศษ</label>
-                                <div className="flex gap-6">
-                                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                                        <input
-                                            type="checkbox"
-                                            className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
-                                            checked={newWallpaper.isPopular}
-                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, isPopular: e.target.checked })}
-                                        />
-                                        <span className="text-sm font-medium text-slate-700">สินค้าขายดี (Popular)</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                                        <input
-                                            type="checkbox"
-                                            className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
-                                            checked={newWallpaper.isNew}
-                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, isNew: e.target.checked })}
-                                        />
-                                        <span className="text-sm font-medium text-slate-700">สินค้ามาใหม่ (New)</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                                        <input
-                                            type="checkbox"
-                                            className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
-                                            checked={newWallpaper.isOffering}
-                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, isOffering: e.target.checked })}
-                                        />
-                                        <span className="text-sm font-medium text-slate-700">ของถวาย (Offering)</span>
-                                    </label>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">ฟอนต์</label>
+                                        <select className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm" value={newFaq.fontFamily} onChange={(e) => setNewFaq({ ...newFaq, fontFamily: e.target.value })}>
+                                            <option value="sans">Sans (ไม่มีหัว)</option>
+                                            <option value="serif">Serif (มีหัว)</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">ลำดับ</label>
+                                        <input type="number" className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm" value={newFaq.order} onChange={(e) => setNewFaq({ ...newFaq, order: parseInt(e.target.value) })} />
+                                    </div>
                                 </div>
 
-                                {newWallpaper.isOffering && (
-                                    <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-slate-200 mt-2">
-                                        <label className="block text-xs font-bold text-orange-500 uppercase mb-1.5 ml-1 flex items-center gap-1">
-                                            <Gift className="w-3 h-3" /> ของถวายสำหรับวอลเปเปอร์หลัก
-                                        </label>
+                                <div className="flex gap-4 pt-4">
+                                    <button type="button" onClick={() => { setShowFaqModal(false); setEditingFaq(null); }} className="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-2xl active:scale-95 transition-all">ยกเลิก</button>
+                                    <button type="submit" className="flex-1 bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-xl active:scale-95 transition-all">{editingFaq ? 'บันทึกการแก้ไข' : 'สร้างคำถาม'}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+            {
+                showAddModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
+                        <div className="bg-white w-full max-w-xl md:max-w-3xl lg:max-w-4xl rounded-[2.5rem] p-6 md:p-8 shadow-2xl animate-in zoom-in duration-300 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                            <h2 className="text-xl font-bold text-slate-800 mb-6">
+                                {editingWallpaper ? 'แก้ไขข้อมูลวอลเปเปอร์' : 'เพิ่มวอลเปเปอร์ใหม่'}
+                            </h2>
+                            <form onSubmit={handleAddWallpaper} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ชื่อ</label>
+                                        <input
+                                            type="text" required
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                            value={newWallpaper.title}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, title: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">หมวดหมู่</label>
                                         <select
-                                            className="w-full p-3 rounded-xl bg-orange-50 border border-orange-200 ring-1 ring-orange-200 outline-none text-sm focus:ring-2 focus:ring-orange-300"
-                                            value={newWallpaper.relatedWallpaperId}
-                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, relatedWallpaperId: e.target.value })}
-                                            required={newWallpaper.isOffering}
+                                            required
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                            value={newWallpaper.categoryId}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, categoryId: e.target.value })}
                                         >
-                                            <option value="">เลือกวอลเปเปอร์หลัก</option>
-                                            {wallpapers.filter((w: any) => !w.isOffering).map((wp: any) => (
-                                                <option key={wp.id} value={wp.id}>{wp.title}</option>
+                                            <option value="">เลือกหมวดหมู่</option>
+                                            {categories.map((cat: any) => (
+                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
                                             ))}
                                         </select>
-                                        <p className="text-[10px] text-orange-400 ml-1 mt-1 italic">* กรุณาเลือกวอลเปเปอร์หลักที่ของถวายชิ้นนี้จะนำไปใช้ร่วมด้วย</p>
                                     </div>
-                                )}
-                            </div>
+                                </div>
 
-                            {/* Content Blocks Section */}
-                            <div className="border-t border-slate-200 pt-6">
-                                <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำอธิบาย (Description)</label>
+                                    <textarea
+                                        rows={3}
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm resize-none"
+                                        value={newWallpaper.description}
+                                        onChange={(e) => setNewWallpaper({ ...newWallpaper, description: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 uppercase">เนื้อหาเพิ่มเติม (Content Blocks)</label>
-                                        <p className="text-xs text-slate-400">เพิ่มรูปภาพและข้อความบรรยายเพิ่มเติมให้กับวอลเปเปอร์</p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={addContentBlock}
-                                        className="text-xs font-bold bg-gold-primary text-white hover:bg-gold-secondary px-3 py-2 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
-                                    >
-                                        <Plus className="w-3 h-3" /> เพิ่มรูปภาพ/ข้อความ
-                                    </button>
-                                </div>
-
-                                <div className="space-y-6">
-                                    {contentBlocks.map((block, index) => (
-                                        <div key={block.id || index} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 relative group animate-in slide-in-from-left duration-300">
-                                            {/* Block Header with Controls */}
-                                            <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                                        เนื้อหาชิ้นที่ {index + 1}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => moveContentBlockUp(index)}
-                                                        disabled={index === 0}
-                                                        className="p-1.5 text-slate-400 hover:text-gold-primary hover:bg-white rounded-lg transition-colors disabled:opacity-30 disabled:hover:text-slate-400"
-                                                        title="เลื่อนขึ้น"
-                                                    >
-                                                        <ArrowUp className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => moveContentBlockDown(index)}
-                                                        disabled={index === contentBlocks.length - 1}
-                                                        className="p-1.5 text-slate-400 hover:text-gold-primary hover:bg-white rounded-lg transition-colors disabled:opacity-30 disabled:hover:text-slate-400"
-                                                        title="เลื่อนลง"
-                                                    >
-                                                        <ArrowDown className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => duplicateContentBlock(index)}
-                                                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-white rounded-lg transition-colors"
-                                                        title="คัดลอก"
-                                                    >
-                                                        <Copy className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeContentBlock(index)}
-                                                        className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-white rounded-lg transition-colors ml-1"
-                                                        title="ลบรายการนี้"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-12 gap-6">
-                                                {/* Image Upload Column */}
-                                                <div className="col-span-12 md:col-span-4 space-y-3">
-                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase">รูปภาพ</label>
-                                                    <div className="w-full aspect-[3/4] bg-white rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden relative transition-colors hover:bg-slate-50 hover:border-gold-primary/30">
-                                                        {(block.previewUrl || block.imageUrl || (block.imageFile && URL.createObjectURL(block.imageFile))) ? (
-                                                            <>
-                                                                <img
-                                                                    src={block.imageFile ? URL.createObjectURL(block.imageFile) : block.imageUrl}
-                                                                    alt="Block"
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                                {/* Text Overlay Preview */}
-                                                                {block.text && (
-                                                                    <div
-                                                                        className={`absolute w-full p-4 text-center pointer-events-none break-words z-10 leading-relaxed`}
-                                                                        style={{
-                                                                            color: block.textColor,
-                                                                            fontFamily: block.fontFamily === 'kanit' ? 'var(--font-kanit)' : block.fontFamily,
-                                                                            fontSize: block.textSize === 'xs' ? '0.75rem' : block.textSize === 'sm' ? '0.875rem' : block.textSize === 'lg' ? '1.125rem' : block.textSize === 'xl' ? '1.25rem' : block.textSize === '2xl' ? '1.5rem' : '1rem',
-                                                                            bottom: block.textPosition === 'bottom' ? 0 : 'auto',
-                                                                            left: 0, right: 0,
-                                                                            transform: block.textPosition === 'center' ? 'translateY(-50%)' : 'none',
-                                                                            top: block.textPosition === 'center' ? '50%' : (block.textPosition === 'top' ? 0 : 'auto'),
-                                                                        }}
-                                                                    >
-                                                                        {block.text}
-                                                                    </div>
-                                                                )}
-                                                            </>
-                                                        ) : (
-                                                            <div className="text-center p-4">
-                                                                <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                                                <span className="text-xs text-slate-400 block">คลิกเพื่อเลือกรูปภาพ</span>
-                                                            </div>
-                                                        )}
-                                                        <input
-                                                            type="file" accept="image/*"
-                                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                                            onChange={(e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) {
-                                                                    updateContentBlock(index, 'imageFile', file);
-                                                                }
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {/* Settings Column */}
-                                                <div className="col-span-12 md:col-span-8 space-y-4">
-                                                    <div>
-                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">ข้อความบรรยาย (Optional)</label>
-                                                        <textarea
-                                                            rows={3}
-                                                            placeholder="พิมพ์ข้อความที่ต้องการแสดง..."
-                                                            className="w-full p-3 rounded-xl bg-white border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm resize-none"
-                                                            value={block.text}
-                                                            onChange={(e) => updateContentBlock(index, 'text', e.target.value)}
-                                                        />
-                                                    </div>
-
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">ตำแหน่งข้อความ</label>
-                                                            <select
-                                                                className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
-                                                                value={block.textPosition}
-                                                                onChange={(e) => updateContentBlock(index, 'textPosition', e.target.value)}
-                                                            >
-                                                                <option value="center">ตรงกลางภาพ (Center)</option>
-                                                                <option value="top">ด้านบนภาพ (Top)</option>
-                                                                <option value="bottom">ด้านล่างภาพ (Bottom)</option>
-                                                            </select>
-                                                            <p className="text-[10px] text-slate-400 mt-1">* ตำแหน่งบนภาพจริง</p>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">รูปแบบฟอนต์</label>
-                                                            <select
-                                                                className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
-                                                                value={block.fontFamily}
-                                                                onChange={(e) => updateContentBlock(index, 'fontFamily', e.target.value)}
-                                                            >
-                                                                <option value="sans">ค่าเริ่มต้น (Sans-serif)</option>
-                                                                <option value="serif">แบบมีเชิง (Serif - หรูหรา)</option>
-                                                                <option value="mono">พิมพ์ดีด (Monospace)</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">สีตัวอักษร</label>
-                                                            <div className="flex items-center gap-2 p-1 bg-white rounded-xl border border-slate-200">
-                                                                <input
-                                                                    type="color"
-                                                                    className="w-8 h-8 rounded-lg border-none cursor-pointer p-0"
-                                                                    value={block.textColor}
-                                                                    onChange={(e) => updateContentBlock(index, 'textColor', e.target.value)}
-                                                                />
-                                                                <span className="text-xs font-mono text-slate-500 uppercase">{block.textColor}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">ขนาดตัวอักษร</label>
-                                                            <select
-                                                                className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
-                                                                value={block.textSize}
-                                                                onChange={(e) => updateContentBlock(index, 'textSize', e.target.value)}
-                                                            >
-                                                                <option value="xs">เล็กมาก (XS)</option>
-                                                                <option value="sm">เล็ก (SM)</option>
-                                                                <option value="base">ปกติ (Base)</option>
-                                                                <option value="lg">ใหญ่ (LG)</option>
-                                                                <option value="xl">ใหญ่พิเศษ (XL)</option>
-                                                                <option value="2xl">มหึมา (2XL)</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    {contentBlocks.length === 0 && (
-                                        <div className="text-center py-8 bg-slate-50/50 border border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-2">
-                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
-                                                <ImageIcon className="w-5 h-5" />
-                                            </div>
-                                            <p className="text-slate-400 text-sm">ยังไม่มีรูปภาพเพิ่มเติม</p>
-                                            <button
-                                                type="button"
-                                                onClick={addContentBlock}
-                                                className="text-xs font-bold text-gold-primary hover:underline mt-1"
-                                            >
-                                                + เพิ่มรูปภาพตอนนี้
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowAddModal(false);
-                                        setEditingWallpaper(null);
-                                        setNewWallpaper({ title: '', description: '', imageUrl: '', categoryId: '', price: 1, blessing: '', deity: '', isPopular: false, isNew: false, isOffering: false, relatedWallpaperId: '', downloadUrl: '' });
-                                        setSelectedFile(null);
-                                        setPreviewUrl(null);
-                                        setContentBlocks([]);
-                                    }}
-                                    className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
-                                >
-                                    ยกเลิก
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 gold-bg text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-transform"
-                                >
-                                    บันทึกข้อมูล
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal for adding user */}
-            {showUserModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
-                        <h2 className="text-xl font-bold text-slate-800 mb-6">
-                            {editingUser ? 'แก้ไขบัญชีแอดมิน/สมาชิก' : 'เพิ่มบัญชีแอดมิน'}
-                        </h2>
-                        <form onSubmit={handleSubmitUser} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ชื่อ</label>
-                                <input
-                                    type="text" required
-                                    className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                    value={newUser.name}
-                                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">อีเมล</label>
-                                <input
-                                    type="email" required
-                                    className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                    value={newUser.email}
-                                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">
-                                    {editingUser ? 'รหัสผ่าน (เว้นว่างไว้ถ้าไม่เปลี่ยน)' : 'รหัสผ่าน'}
-                                </label>
-                                <input
-                                    type="password" required={!editingUser}
-                                    className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
-                                    value={newUser.password}
-                                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                                />
-                            </div>
-                            <div className="flex items-center gap-2 px-1">
-                                <input
-                                    type="checkbox" id="isAdminCheckbox"
-                                    className="w-4 h-4 rounded border-slate-300 text-gold-primary focus:ring-gold-primary"
-                                    checked={newUser.isAdmin}
-                                    onChange={(e) => setNewUser({ ...newUser, isAdmin: e.target.checked })}
-                                />
-                                <label htmlFor="isAdminCheckbox" className="text-sm font-medium text-slate-700 cursor-pointer">ตั้งเป็นแอดมิน (Admin Role)</label>
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowUserModal(false);
-                                        setEditingUser(null);
-                                        setNewUser({ name: '', email: '', password: '', isAdmin: false });
-                                    }}
-                                    className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
-                                >
-                                    ยกเลิก
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-transform"
-                                >
-                                    {editingUser ? 'บันทึกการแก้ไข' : 'สร้างบัญชี'}
-                                </button>
-                            </div>
-                            <p className="text-[10px] text-slate-400 text-center mt-4">
-                                * ข้อมูลจะได้รับการอัปเดตทันทีเมื่อกดบันทึก
-                            </p>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {/* Modal for adding/editing category */}
-            {showCategoryModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
-                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 overflow-y-auto max-h-[90vh]">
-                        <h2 className="text-xl font-bold text-slate-800 mb-6">
-                            {editingCategory ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่ใหม่'}
-                        </h2>
-                        <form onSubmit={handleSubmitCategory} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ชื่อหมวดหมู่</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                        value={newCategory.name}
-                                        onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำโปรย (Subtitle)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                        placeholder="เช่น เมตตามหานิยม"
-                                        value={newCategory.subtitle}
-                                        onChange={(e) => setNewCategory({ ...newCategory, subtitle: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">สีพื้นหลังการ์ด</label>
-                                    <div className="flex gap-2">
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ราคา (เครดิต)</label>
                                         <input
-                                            type="color"
-                                            className="w-10 h-10 rounded-lg overflow-hidden border-none cursor-pointer"
-                                            value={newCategory.bgColor}
-                                            onChange={(e) => setNewCategory({ ...newCategory, bgColor: e.target.value })}
+                                            type="number" required min="1"
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                            value={newWallpaper.price}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, price: parseInt(e.target.value) })}
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำอวยพร (Blessing)</label>
                                         <input
                                             type="text"
-                                            className="flex-1 p-2 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm font-mono"
-                                            value={newCategory.bgColor}
-                                            onChange={(e) => setNewCategory({ ...newCategory, bgColor: e.target.value })}
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                            value={newWallpaper.blessing}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, blessing: e.target.value })}
                                         />
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">สีตัวอักษร</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="color"
-                                            className="w-10 h-10 rounded-lg overflow-hidden border-none cursor-pointer"
-                                            value={newCategory.textColor}
-                                            onChange={(e) => setNewCategory({ ...newCategory, textColor: e.target.value })}
-                                        />
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">เทพเจ้า (Deity)</label>
                                         <input
                                             type="text"
-                                            className="flex-1 p-2 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm font-mono"
-                                            value={newCategory.textColor}
-                                            onChange={(e) => setNewCategory({ ...newCategory, textColor: e.target.value })}
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                            value={newWallpaper.deity}
+                                            onChange={(e) => setNewWallpaper({ ...newWallpaper, deity: e.target.value })}
                                         />
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ลำดับการแสดงผล</label>
-                                    <input
-                                        type="number"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                        value={newCategory.order}
-                                        onChange={(e) => setNewCategory({ ...newCategory, order: parseInt(e.target.value) })}
-                                    />
-                                </div>
-                                <div>
-                                    {/* Placeholder for alignment */}
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำอธิบาย/Tooltip</label>
-                                <textarea
-                                    className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm h-20 resize-none"
-                                    placeholder="คำอธิบายเพิ่มเติมเมื่อเอาเมาส์วาง..."
-                                    value={newCategory.tooltip}
-                                    onChange={(e) => setNewCategory({ ...newCategory, tooltip: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปเทพเจ้า/ไอคอน</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปภาพวอลเปเปอร์ (Preview)</label>
                                     <div className="space-y-3">
                                         {previewUrl && (
-                                            <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
-                                                <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
+                                            <div className="w-24 h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
+                                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                                             </div>
                                         )}
                                         <input
-                                            type="file" accept="image/*"
-                                            className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
+                                            type="file" accept="image/*" required={!editingWallpaper}
+                                            className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) {
@@ -1563,201 +1330,704 @@ export default function AdminDashboard() {
                                         />
                                     </div>
                                 </div>
+
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปพื้นหลังหมวดหมู่</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 text-gold-primary">ไฟล์วอลเปเปอร์สำหรับดาวน์โหลด (High Quality)</label>
+                                    <div className="space-y-2">
+                                        {newWallpaper.downloadUrl && !selectedDownloadFile && (
+                                            <div className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg inline-block">
+                                                ✓ มีไฟล์ชุดดาวน์โหลดเดิมแล้ว
+                                            </div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    setSelectedDownloadFile(file);
+                                                }
+                                            }}
+                                        />
+                                        <p className="text-[10px] text-slate-400">* ไฟล์นี้สำหรับให้ลูกค้าดาวน์โหลดหลังชำระเงิน (ควรใช้ไฟล์ความละเอียดสูง)</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">ตั้งค่าพิเศษ</label>
+                                    <div className="flex gap-6">
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
+                                                checked={newWallpaper.isPopular}
+                                                onChange={(e) => setNewWallpaper({ ...newWallpaper, isPopular: e.target.checked })}
+                                            />
+                                            <span className="text-sm font-medium text-slate-700">สินค้าขายดี (Popular)</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
+                                                checked={newWallpaper.isNew}
+                                                onChange={(e) => setNewWallpaper({ ...newWallpaper, isNew: e.target.checked })}
+                                            />
+                                            <span className="text-sm font-medium text-slate-700">สินค้ามาใหม่ (New)</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                className="w-5 h-5 rounded border-slate-300 text-gold-primary focus:ring-gold-primary accent-gold-primary"
+                                                checked={newWallpaper.isOffering}
+                                                onChange={(e) => setNewWallpaper({ ...newWallpaper, isOffering: e.target.checked })}
+                                            />
+                                            <span className="text-sm font-medium text-slate-700">ของถวาย (Offering)</span>
+                                        </label>
+                                    </div>
+
+                                    {newWallpaper.isOffering && (
+                                        <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-slate-200 mt-2">
+                                            <label className="block text-xs font-bold text-orange-500 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                                                <Gift className="w-3 h-3" /> ของถวายสำหรับวอลเปเปอร์หลัก
+                                            </label>
+                                            <select
+                                                className="w-full p-3 rounded-xl bg-orange-50 border border-orange-200 ring-1 ring-orange-200 outline-none text-sm focus:ring-2 focus:ring-orange-300"
+                                                value={newWallpaper.relatedWallpaperId}
+                                                onChange={(e) => setNewWallpaper({ ...newWallpaper, relatedWallpaperId: e.target.value })}
+                                                required={newWallpaper.isOffering}
+                                            >
+                                                <option value="">เลือกวอลเปเปอร์หลัก</option>
+                                                {wallpapers.filter((w: any) => !w.isOffering).map((wp: any) => (
+                                                    <option key={wp.id} value={wp.id}>{wp.title}</option>
+                                                ))}
+                                            </select>
+                                            <p className="text-[10px] text-orange-400 ml-1 mt-1 italic">* กรุณาเลือกวอลเปเปอร์หลักที่ของถวายชิ้นนี้จะนำไปใช้ร่วมด้วย</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Content Blocks Section */}
+                                <div className="border-t border-slate-200 pt-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 uppercase">เนื้อหาเพิ่มเติม (Content Blocks)</label>
+                                            <p className="text-xs text-slate-400">เพิ่มรูปภาพและข้อความบรรยายเพิ่มเติมให้กับวอลเปเปอร์</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={addContentBlock}
+                                            className="text-xs font-bold bg-gold-primary text-white hover:bg-gold-secondary px-3 py-2 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                                        >
+                                            <Plus className="w-3 h-3" /> เพิ่มรูปภาพ/ข้อความ
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        {contentBlocks.map((block, index) => (
+                                            <div key={block.id || index} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 relative group animate-in slide-in-from-left duration-300">
+                                                {/* Block Header with Controls */}
+                                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                            เนื้อหาชิ้นที่ {index + 1}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveContentBlockUp(index)}
+                                                            disabled={index === 0}
+                                                            className="p-1.5 text-slate-400 hover:text-gold-primary hover:bg-white rounded-lg transition-colors disabled:opacity-30 disabled:hover:text-slate-400"
+                                                            title="เลื่อนขึ้น"
+                                                        >
+                                                            <ArrowUp className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveContentBlockDown(index)}
+                                                            disabled={index === contentBlocks.length - 1}
+                                                            className="p-1.5 text-slate-400 hover:text-gold-primary hover:bg-white rounded-lg transition-colors disabled:opacity-30 disabled:hover:text-slate-400"
+                                                            title="เลื่อนลง"
+                                                        >
+                                                            <ArrowDown className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => duplicateContentBlock(index)}
+                                                            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-white rounded-lg transition-colors"
+                                                            title="คัดลอก"
+                                                        >
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeContentBlock(index)}
+                                                            className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-white rounded-lg transition-colors ml-1"
+                                                            title="ลบรายการนี้"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-12 gap-6">
+                                                    {/* Image Upload Column */}
+                                                    <div className="col-span-12 md:col-span-4 space-y-3">
+                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase">รูปภาพ</label>
+                                                        <div className="w-full aspect-[3/4] bg-white rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden relative transition-colors hover:bg-slate-50 hover:border-gold-primary/30">
+                                                            {(block.previewUrl || block.imageUrl || (block.imageFile && URL.createObjectURL(block.imageFile))) ? (
+                                                                <>
+                                                                    <img
+                                                                        src={block.imageFile ? URL.createObjectURL(block.imageFile) : block.imageUrl}
+                                                                        alt="Block"
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                    {/* Text Overlay Preview */}
+                                                                    {block.text && (
+                                                                        <div
+                                                                            className={`absolute w-full p-4 text-center pointer-events-none break-words z-10 leading-relaxed`}
+                                                                            style={{
+                                                                                color: block.textColor,
+                                                                                fontFamily: block.fontFamily === 'kanit' ? 'var(--font-kanit)' : block.fontFamily,
+                                                                                fontSize: block.textSize === 'xs' ? '0.75rem' : block.textSize === 'sm' ? '0.875rem' : block.textSize === 'lg' ? '1.125rem' : block.textSize === 'xl' ? '1.25rem' : block.textSize === '2xl' ? '1.5rem' : '1rem',
+                                                                                bottom: block.textPosition === 'bottom' ? 0 : 'auto',
+                                                                                left: 0, right: 0,
+                                                                                transform: block.textPosition === 'center' ? 'translateY(-50%)' : 'none',
+                                                                                top: block.textPosition === 'center' ? '50%' : (block.textPosition === 'top' ? 0 : 'auto'),
+                                                                            }}
+                                                                        >
+                                                                            {block.text}
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <div className="text-center p-4">
+                                                                    <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                                                    <span className="text-xs text-slate-400 block">คลิกเพื่อเลือกรูปภาพ</span>
+                                                                </div>
+                                                            )}
+                                                            <input
+                                                                type="file" accept="image/*"
+                                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (file) {
+                                                                        updateContentBlock(index, 'imageFile', file);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Settings Column */}
+                                                    <div className="col-span-12 md:col-span-8 space-y-4">
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">ข้อความบรรยาย (Optional)</label>
+                                                            <textarea
+                                                                rows={3}
+                                                                placeholder="พิมพ์ข้อความที่ต้องการแสดง..."
+                                                                className="w-full p-3 rounded-xl bg-white border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm resize-none"
+                                                                value={block.text}
+                                                                onChange={(e) => updateContentBlock(index, 'text', e.target.value)}
+                                                            />
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">ตำแหน่งข้อความ</label>
+                                                                <select
+                                                                    className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
+                                                                    value={block.textPosition}
+                                                                    onChange={(e) => updateContentBlock(index, 'textPosition', e.target.value)}
+                                                                >
+                                                                    <option value="center">ตรงกลางภาพ (Center)</option>
+                                                                    <option value="top">ด้านบนภาพ (Top)</option>
+                                                                    <option value="bottom">ด้านล่างภาพ (Bottom)</option>
+                                                                </select>
+                                                                <p className="text-[10px] text-slate-400 mt-1">* ตำแหน่งบนภาพจริง</p>
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">รูปแบบฟอนต์</label>
+                                                                <select
+                                                                    className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
+                                                                    value={block.fontFamily}
+                                                                    onChange={(e) => updateContentBlock(index, 'fontFamily', e.target.value)}
+                                                                >
+                                                                    <option value="sans">ค่าเริ่มต้น (Sans-serif)</option>
+                                                                    <option value="serif">แบบมีเชิง (Serif - หรูหรา)</option>
+                                                                    <option value="mono">พิมพ์ดีด (Monospace)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">สีตัวอักษร</label>
+                                                                <div className="flex items-center gap-2 p-1 bg-white rounded-xl border border-slate-200">
+                                                                    <input
+                                                                        type="color"
+                                                                        className="w-8 h-8 rounded-lg border-none cursor-pointer p-0"
+                                                                        value={block.textColor}
+                                                                        onChange={(e) => updateContentBlock(index, 'textColor', e.target.value)}
+                                                                    />
+                                                                    <span className="text-xs font-mono text-slate-500 uppercase">{block.textColor}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">ขนาดตัวอักษร</label>
+                                                                <select
+                                                                    className="w-full p-2.5 rounded-xl bg-white border-none ring-1 ring-slate-200 outline-none text-sm cursor-pointer"
+                                                                    value={block.textSize}
+                                                                    onChange={(e) => updateContentBlock(index, 'textSize', e.target.value)}
+                                                                >
+                                                                    <option value="xs">เล็กมาก (XS)</option>
+                                                                    <option value="sm">เล็ก (SM)</option>
+                                                                    <option value="base">ปกติ (Base)</option>
+                                                                    <option value="lg">ใหญ่ (LG)</option>
+                                                                    <option value="xl">ใหญ่พิเศษ (XL)</option>
+                                                                    <option value="2xl">มหึมา (2XL)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {contentBlocks.length === 0 && (
+                                            <div className="text-center py-8 bg-slate-50/50 border border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-2">
+                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
+                                                    <ImageIcon className="w-5 h-5" />
+                                                </div>
+                                                <p className="text-slate-400 text-sm">ยังไม่มีรูปภาพเพิ่มเติม</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={addContentBlock}
+                                                    className="text-xs font-bold text-gold-primary hover:underline mt-1"
+                                                >
+                                                    + เพิ่มรูปภาพตอนนี้
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowAddModal(false);
+                                            setEditingWallpaper(null);
+                                            setNewWallpaper({ title: '', description: '', imageUrl: '', categoryId: '', price: 1, blessing: '', deity: '', isPopular: false, isNew: false, isOffering: false, relatedWallpaperId: '', downloadUrl: '' });
+                                            setSelectedFile(null);
+                                            setPreviewUrl(null);
+                                            setContentBlocks([]);
+                                        }}
+                                        className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 gold-bg text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        บันทึกข้อมูล
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Modal for adding user */}
+            {
+                showUserModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
+                        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
+                            <h2 className="text-xl font-bold text-slate-800 mb-6">
+                                {editingUser ? 'แก้ไขบัญชีแอดมิน/สมาชิก' : 'เพิ่มบัญชีแอดมิน'}
+                            </h2>
+                            <form onSubmit={handleSubmitUser} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ชื่อ</label>
+                                    <input
+                                        type="text" required
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                        value={newUser.name}
+                                        onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">อีเมล</label>
+                                    <input
+                                        type="email" required
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                        value={newUser.email}
+                                        onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">
+                                        {editingUser ? 'รหัสผ่าน (เว้นว่างไว้ถ้าไม่เปลี่ยน)' : 'รหัสผ่าน'}
+                                    </label>
+                                    <input
+                                        type="password" required={!editingUser}
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                        value={newUser.password}
+                                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 px-1">
+                                    <input
+                                        type="checkbox" id="isAdminCheckbox"
+                                        className="w-4 h-4 rounded border-slate-300 text-gold-primary focus:ring-gold-primary"
+                                        checked={newUser.isAdmin}
+                                        onChange={(e) => setNewUser({ ...newUser, isAdmin: e.target.checked })}
+                                    />
+                                    <label htmlFor="isAdminCheckbox" className="text-sm font-medium text-slate-700 cursor-pointer">ตั้งเป็นแอดมิน (Admin Role)</label>
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowUserModal(false);
+                                            setEditingUser(null);
+                                            setNewUser({ name: '', email: '', password: '', isAdmin: false });
+                                        }}
+                                        className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        {editingUser ? 'บันทึกการแก้ไข' : 'สร้างบัญชี'}
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-slate-400 text-center mt-4">
+                                    * ข้อมูลจะได้รับการอัปเดตทันทีเมื่อกดบันทึก
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+            {/* Modal for adding/editing category */}
+            {
+                showCategoryModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
+                        <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 overflow-y-auto max-h-[90vh]">
+                            <h2 className="text-xl font-bold text-slate-800 mb-6">
+                                {editingCategory ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่ใหม่'}
+                            </h2>
+                            <form onSubmit={handleSubmitCategory} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ชื่อหมวดหมู่</label>
+                                        <input
+                                            type="text" required
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                            value={newCategory.name}
+                                            onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำโปรย (Subtitle)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                            placeholder="เช่น เมตตามหานิยม"
+                                            value={newCategory.subtitle}
+                                            onChange={(e) => setNewCategory({ ...newCategory, subtitle: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">สีพื้นหลังการ์ด</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="color"
+                                                className="w-10 h-10 rounded-lg overflow-hidden border-none cursor-pointer"
+                                                value={newCategory.bgColor}
+                                                onChange={(e) => setNewCategory({ ...newCategory, bgColor: e.target.value })}
+                                            />
+                                            <input
+                                                type="text"
+                                                className="flex-1 p-2 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm font-mono"
+                                                value={newCategory.bgColor}
+                                                onChange={(e) => setNewCategory({ ...newCategory, bgColor: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">สีตัวอักษร</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="color"
+                                                className="w-10 h-10 rounded-lg overflow-hidden border-none cursor-pointer"
+                                                value={newCategory.textColor}
+                                                onChange={(e) => setNewCategory({ ...newCategory, textColor: e.target.value })}
+                                            />
+                                            <input
+                                                type="text"
+                                                className="flex-1 p-2 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm font-mono"
+                                                value={newCategory.textColor}
+                                                onChange={(e) => setNewCategory({ ...newCategory, textColor: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">ลำดับการแสดงผล</label>
+                                        <input
+                                            type="number"
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                            value={newCategory.order}
+                                            onChange={(e) => setNewCategory({ ...newCategory, order: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div>
+                                        {/* Placeholder for alignment */}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">คำอธิบาย/Tooltip</label>
+                                    <textarea
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm h-20 resize-none"
+                                        placeholder="คำอธิบายเพิ่มเติมเมื่อเอาเมาส์วาง..."
+                                        value={newCategory.tooltip}
+                                        onChange={(e) => setNewCategory({ ...newCategory, tooltip: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปเทพเจ้า/ไอคอน</label>
+                                        <div className="space-y-3">
+                                            {previewUrl && (
+                                                <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
+                                                    <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file" accept="image/*"
+                                                className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setSelectedFile(file);
+                                                        setPreviewUrl(URL.createObjectURL(file));
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปพื้นหลังหมวดหมู่</label>
+                                        <div className="space-y-3">
+                                            {bgPreviewUrl && (
+                                                <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
+                                                    <img src={bgPreviewUrl} alt="BG Preview" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 opacity-40" style={{ backgroundColor: newCategory.bgColor }} />
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file" accept="image/*"
+                                                className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setSelectedBgFile(file);
+                                                        setBgPreviewUrl(URL.createObjectURL(file));
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowCategoryModal(false);
+                                            setEditingCategory(null);
+                                            setNewCategory({ name: '', subtitle: '', description: '', bgColor: '#D9C4A1', textColor: '#1e293b', imageUrl: '', bgImageUrl: '', tooltip: '', order: 0 });
+                                            setSelectedFile(null);
+                                            setPreviewUrl(null);
+                                            setSelectedBgFile(null);
+                                            setBgPreviewUrl(null);
+                                        }}
+                                        className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl transition-colors"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        {editingCategory ? 'บันทึกการแก้ไข' : 'สร้างหมวดหมู่'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+            {/* Modal for adding/editing slideshow */}
+            {
+                showSlideshowModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
+                        <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 overflow-y-auto max-h-[90vh]">
+                            <h2 className="text-xl font-bold text-slate-800 mb-6 font-sans">
+                                {editingSlideshow ? 'แก้ไขสไลด์โชว์' : 'เพิ่มสไลด์โชว์ใหม่'}
+                            </h2>
+                            <form onSubmit={handleSubmitSlideshow} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">หัวข้อหลัก (Title)</label>
+                                        <input
+                                            type="text" required
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                            value={newSlideshow.title}
+                                            onChange={(e) => setNewSlideshow({ ...newSlideshow, title: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">หัวข้อย่อย (Subtitle)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                            value={newSlideshow.subtitle}
+                                            onChange={(e) => setNewSlideshow({ ...newSlideshow, subtitle: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">สีพื้นหลัง (Hex)</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="color"
+                                                className="w-10 h-10 rounded-lg overflow-hidden border-none"
+                                                value={newSlideshow.bgColor}
+                                                onChange={(e) => setNewSlideshow({ ...newSlideshow, bgColor: e.target.value })}
+                                            />
+                                            <input
+                                                type="text"
+                                                className="flex-1 p-2 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                                value={newSlideshow.bgColor}
+                                                onChange={(e) => setNewSlideshow({ ...newSlideshow, bgColor: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">ข้อความปุ่ม</label>
+                                        <input
+                                            type="text" required
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                            value={newSlideshow.buttonText}
+                                            onChange={(e) => setNewSlideshow({ ...newSlideshow, buttonText: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">เชื่อมต่อกับวอลเปเปอร์</label>
+                                    <select
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                        value={newSlideshow.wallpaperId}
+                                        onChange={(e) => setNewSlideshow({ ...newSlideshow, wallpaperId: e.target.value })}
+                                    >
+                                        <option value="">เลือกวอลเปเปอร์ (ทางเลือก)</option>
+                                        {wallpapers.map((wp: any) => (
+                                            <option key={wp.id} value={wp.id}>{wp.title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปภาพแบนเนอร์ (ถ้าไม่ใช้รูปวอลเปเปอร์)</label>
                                     <div className="space-y-3">
-                                        {bgPreviewUrl && (
-                                            <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
-                                                <img src={bgPreviewUrl} alt="BG Preview" className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 opacity-40" style={{ backgroundColor: newCategory.bgColor }} />
+                                        {previewUrl && (
+                                            <div className="w-full h-32 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
+                                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                <div
+                                                    className="absolute inset-0 opacity-20"
+                                                    style={{ backgroundColor: newSlideshow.bgColor }}
+                                                />
                                             </div>
                                         )}
                                         <input
                                             type="file" accept="image/*"
-                                            className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
+                                            className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) {
-                                                    setSelectedBgFile(file);
-                                                    setBgPreviewUrl(URL.createObjectURL(file));
+                                                    setSelectedFile(file);
+                                                    setPreviewUrl(URL.createObjectURL(file));
                                                 }
                                             }}
                                         />
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowCategoryModal(false);
-                                        setEditingCategory(null);
-                                        setNewCategory({ name: '', subtitle: '', description: '', bgColor: '#D9C4A1', textColor: '#1e293b', imageUrl: '', bgImageUrl: '', tooltip: '', order: 0 });
-                                        setSelectedFile(null);
-                                        setPreviewUrl(null);
-                                        setSelectedBgFile(null);
-                                        setBgPreviewUrl(null);
-                                    }}
-                                    className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl transition-colors"
-                                >
-                                    ยกเลิก
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-transform"
-                                >
-                                    {editingCategory ? 'บันทึกการแก้ไข' : 'สร้างหมวดหมู่'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {/* Modal for adding/editing slideshow */}
-            {showSlideshowModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
-                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 overflow-y-auto max-h-[90vh]">
-                        <h2 className="text-xl font-bold text-slate-800 mb-6 font-sans">
-                            {editingSlideshow ? 'แก้ไขสไลด์โชว์' : 'เพิ่มสไลด์โชว์ใหม่'}
-                        </h2>
-                        <form onSubmit={handleSubmitSlideshow} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">หัวข้อหลัก (Title)</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                        value={newSlideshow.title}
-                                        onChange={(e) => setNewSlideshow({ ...newSlideshow, title: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">หัวข้อย่อย (Subtitle)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                        value={newSlideshow.subtitle}
-                                        onChange={(e) => setNewSlideshow({ ...newSlideshow, subtitle: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">สีพื้นหลัง (Hex)</label>
-                                    <div className="flex gap-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">ลำดับการแสดงผล</label>
                                         <input
-                                            type="color"
-                                            className="w-10 h-10 rounded-lg overflow-hidden border-none"
-                                            value={newSlideshow.bgColor}
-                                            onChange={(e) => setNewSlideshow({ ...newSlideshow, bgColor: e.target.value })}
-                                        />
-                                        <input
-                                            type="text"
-                                            className="flex-1 p-2 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                            value={newSlideshow.bgColor}
-                                            onChange={(e) => setNewSlideshow({ ...newSlideshow, bgColor: e.target.value })}
+                                            type="number"
+                                            className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
+                                            value={newSlideshow.order}
+                                            onChange={(e) => setNewSlideshow({ ...newSlideshow, order: parseInt(e.target.value) })}
                                         />
                                     </div>
+                                    <div className="flex items-center gap-2 pt-6">
+                                        <input
+                                            type="checkbox" id="isActiveSlide"
+                                            className="w-4 h-4 rounded border-slate-300 text-gold-primary"
+                                            checked={newSlideshow.isActive}
+                                            onChange={(e) => setNewSlideshow({ ...newSlideshow, isActive: e.target.checked })}
+                                        />
+                                        <label htmlFor="isActiveSlide" className="text-sm font-medium text-slate-700">เปิดใช้งาน</label>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">ข้อความปุ่ม</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                        value={newSlideshow.buttonText}
-                                        onChange={(e) => setNewSlideshow({ ...newSlideshow, buttonText: e.target.value })}
-                                    />
-                                </div>
-                            </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">เชื่อมต่อกับวอลเปเปอร์</label>
-                                <select
-                                    className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                    value={newSlideshow.wallpaperId}
-                                    onChange={(e) => setNewSlideshow({ ...newSlideshow, wallpaperId: e.target.value })}
-                                >
-                                    <option value="">เลือกวอลเปเปอร์ (ทางเลือก)</option>
-                                    {wallpapers.map((wp: any) => (
-                                        <option key={wp.id} value={wp.id}>{wp.title}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">รูปภาพแบนเนอร์ (ถ้าไม่ใช้รูปวอลเปเปอร์)</label>
-                                <div className="space-y-3">
-                                    {previewUrl && (
-                                        <div className="w-full h-32 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
-                                            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                                            <div
-                                                className="absolute inset-0 opacity-20"
-                                                style={{ backgroundColor: newSlideshow.bgColor }}
-                                            />
-                                        </div>
-                                    )}
-                                    <input
-                                        type="file" accept="image/*"
-                                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                setSelectedFile(file);
-                                                setPreviewUrl(URL.createObjectURL(file));
-                                            }
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowSlideshowModal(false);
+                                            setEditingSlideshow(null);
+                                            setNewSlideshow({ title: '', subtitle: '', bgColor: '#D1A7FF', buttonText: 'Get Now', wallpaperId: '', order: 0, isActive: true });
+                                            setSelectedFile(null);
+                                            setPreviewUrl(null);
                                         }}
-                                    />
+                                        className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl"
+                                    >
+                                        {editingSlideshow ? 'บันทึกการแก้ไข' : 'สร้างสไลด์'}
+                                    </button>
                                 </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">ลำดับการแสดงผล</label>
-                                    <input
-                                        type="number"
-                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
-                                        value={newSlideshow.order}
-                                        onChange={(e) => setNewSlideshow({ ...newSlideshow, order: parseInt(e.target.value) })}
-                                    />
-                                </div>
-                                <div className="flex items-center gap-2 pt-6">
-                                    <input
-                                        type="checkbox" id="isActiveSlide"
-                                        className="w-4 h-4 rounded border-slate-300 text-gold-primary"
-                                        checked={newSlideshow.isActive}
-                                        onChange={(e) => setNewSlideshow({ ...newSlideshow, isActive: e.target.checked })}
-                                    />
-                                    <label htmlFor="isActiveSlide" className="text-sm font-medium text-slate-700">เปิดใช้งาน</label>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowSlideshowModal(false);
-                                        setEditingSlideshow(null);
-                                        setNewSlideshow({ title: '', subtitle: '', bgColor: '#D1A7FF', buttonText: 'Get Now', wallpaperId: '', order: 0, isActive: true });
-                                        setSelectedFile(null);
-                                        setPreviewUrl(null);
-                                    }}
-                                    className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl"
-                                >
-                                    ยกเลิก
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl"
-                                >
-                                    {editingSlideshow ? 'บันทึกการแก้ไข' : 'สร้างสไลด์'}
-                                </button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

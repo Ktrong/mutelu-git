@@ -176,3 +176,19 @@ enum OrderStatus {
   SUCCESS
   FAILED
 }
+
+model Faq {
+  id            String   @id @default(cuid())
+  question      String   @db.Text
+  answer        String   @db.Text
+  questionColor String   @default("#000000")
+  answerColor   String   @default("#4B5563")
+  questionSize  String   @default("lg")
+  answerSize    String   @default("base")
+  fontFamily    String   @default("sans")
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("faq")
+}
