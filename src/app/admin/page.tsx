@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent } from 'lucide-react';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -26,6 +26,9 @@ export default function AdminDashboard() {
     const [showFaqModal, setShowFaqModal] = useState(false);
     const [editingFaq, setEditingFaq] = useState<any>(null);
     const [isAuthenticating, setIsAuthenticating] = useState(true);
+
+    const [commissionRates, setCommissionRates] = useState<any[]>([{ level: 1, percentage: 10 }, { level: 2, percentage: 5 }, { level: 3, percentage: 2 }]);
+    const [payoutsList, setPayoutsList] = useState<any[]>([]);
 
     // Form state for Wallpaper
     const [newWallpaper, setNewWallpaper] = useState({
@@ -175,18 +178,22 @@ export default function AdminDashboard() {
 
     const fetchData = async () => {
         try {
-            const [wpRes, catRes, userRes, slideRes, faqRes] = await Promise.all([
+            const [wpRes, catRes, userRes, slideRes, faqRes, commRes, payRes] = await Promise.all([
                 fetch('/api/wallpapers'),
                 fetch('/api/categories'),
                 fetch('/api/admin/users'),
                 fetch('/api/slideshows'),
-                fetch('/api/faqs')
+                fetch('/api/faqs'),
+                fetch('/api/admin/commissions'),
+                fetch('/api/admin/payouts')
             ]);
             const wpData = await wpRes.json();
             const catData = await catRes.json();
             const userData = await userRes.json();
             const slideData = await slideRes.json();
             const faqData = await faqRes.json();
+            const commData = await commRes.json();
+            const payData = await payRes.json();
             const orderRes = await fetch('/api/orders');
             const orderData = await orderRes.json();
 
@@ -195,6 +202,8 @@ export default function AdminDashboard() {
             setUsers(Array.isArray(userData) ? userData : []);
             setSlideshows(Array.isArray(slideData) ? slideData : []);
             setFaqs(Array.isArray(faqData) ? faqData : []);
+            setCommissionRates(Array.isArray(commData) && commData.length > 0 ? commData : [{ level: 1, percentage: 10 }, { level: 2, percentage: 5 }, { level: 3, percentage: 2 }]);
+            setPayoutsList(Array.isArray(payData) ? payData : []);
             setOrders(Array.isArray(orderData) ? orderData : []);
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -533,6 +542,18 @@ export default function AdminDashboard() {
                         className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'faqs' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
                     >
                         <Settings className="w-4 h-4" /> คำถามที่พบบ่อย (FAQs)
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('commissions')}
+                        className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'commissions' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
+                    >
+                        <Percent className="w-4 h-4" /> Affiliate MLM
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('payouts')}
+                        className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'payouts' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
+                    >
+                        <DollarSign className="w-4 h-4" /> แจ้งถอนเงิน
                     </button>
                 </nav>
 
@@ -1120,6 +1141,148 @@ export default function AdminDashboard() {
                                         <tr>
                                             <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">
                                                 ยังไม่มีข้อมูลคำถาม
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {activeTab === 'commissions' && (
+                    <>
+                        <header className="flex justify-between items-center mb-8">
+                            <h1 className="text-2xl font-bold text-slate-800">ตั้งค่า Affiliate & MLM</h1>
+                            <button
+                                onClick={async () => {
+                                    await fetch('/api/admin/commissions', {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ rates: commissionRates })
+                                    });
+                                    alert('บันทึกค่าคอมมิชชั่นเรียบร้อยแล้ว');
+                                    fetchData();
+                                }}
+                                className="bg-amber-500 text-white px-6 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+                            >
+                                <Copy className="w-4 h-4" /> บันทึกการตั้งค่า
+                            </button>
+                        </header>
+
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                            <h3 className="text-lg font-bold text-slate-800 mb-4">กำหนด % ส่วนแบ่งค่าคอมมิชชั่นตามระดับชั้น (Level)</h3>
+                            <div className="space-y-4 max-w-lg">
+                                {commissionRates.map((rate, index) => (
+                                    <div key={index} className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <div className="w-24 font-bold text-slate-700">ชั้นที่ {rate.level}</div>
+                                        <div className="flex-1 relative">
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                className="w-full border-none ring-1 ring-slate-200 rounded-lg py-2 px-3 outline-none focus:ring-amber-500"
+                                                value={rate.percentage}
+                                                onChange={(e) => {
+                                                    const newRates = [...commissionRates];
+                                                    newRates[index].percentage = parseFloat(e.target.value);
+                                                    setCommissionRates(newRates);
+                                                }}
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => setCommissionRates([...commissionRates, { level: commissionRates.length + 1, percentage: 0 }])}
+                                    className="text-amber-600 font-bold text-sm w-full py-3 border-2 border-dashed border-amber-200 rounded-xl hover:bg-amber-50 mt-4"
+                                >
+                                    + เพิ่มระดับชั้น
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {activeTab === 'payouts' && (
+                    <>
+                        <header className="flex justify-between items-center mb-8">
+                            <h1 className="text-2xl font-bold text-slate-800">รายการแจ้งถอนเงิน (Payouts)</h1>
+                        </header>
+
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <table className="w-full text-left font-sans">
+                                <thead className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <tr>
+                                        <th className="px-6 py-4">วัน/เวลา</th>
+                                        <th className="px-6 py-4">ผู้ใช้งาน (อีเมล)</th>
+                                        <th className="px-6 py-4">จำนวนเงิน</th>
+                                        <th className="px-6 py-4 text-center">สถานะ</th>
+                                        <th className="px-6 py-4 text-right">ดำเนินการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {payoutsList.map((payout: any) => (
+                                        <tr key={payout.id} className="text-sm hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4 text-slate-500 text-xs">
+                                                {new Date(payout.createdAt).toLocaleString('th-TH')}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-slate-700">{payout.user?.name || '-'}</div>
+                                                <div className="text-xs text-slate-400">{payout.user?.email}</div>
+                                            </td>
+                                            <td className="px-6 py-4 font-bold text-amber-600">
+                                                ฿{payout.amount.toFixed(2)}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`px-3 py-1 text-[10px] font-bold rounded-full ${payout.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                                        payout.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                            'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                    {payout.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {payout.status === 'PENDING' && (
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm('ยืนยันอนุมัติการถอนเงิน (โปรดโอนเงินให้ผู้ใช้ก่อนกด)?')) {
+                                                                    await fetch('/api/admin/payouts', {
+                                                                        method: 'PUT',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ id: payout.id, status: 'APPROVED' })
+                                                                    });
+                                                                    fetchData();
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-bold hover:bg-green-600"
+                                                        >
+                                                            อนุมัติ
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm('ยืนยันปฏิเสธการถอนเงิน (คืนยอดคงเหลือ)?')) {
+                                                                    await fetch('/api/admin/payouts', {
+                                                                        method: 'PUT',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ id: payout.id, status: 'REJECTED' })
+                                                                    });
+                                                                    fetchData();
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600"
+                                                        >
+                                                            ปฏิเสธ
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {payoutsList.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic font-sans">
+                                                ยังไม่มีรายการถอนเงิน
                                             </td>
                                         </tr>
                                     )}

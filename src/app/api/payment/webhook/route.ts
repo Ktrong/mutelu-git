@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendOrderConfirmationEmail } from '@/lib/email';
+import { distributeCommission } from '@/lib/affiliate';
 
 export async function POST(req: Request) {
     try {
@@ -31,9 +32,12 @@ export async function POST(req: Request) {
                     include: { wallpaper: true }
                 });
 
-                // 4. If successful, send confirmation/download email
+                // 4. If successful, send confirmation/download email and distribute commission
                 if (status === 'SUCCESS') {
-                    await sendOrderConfirmationEmail(updatedOrder);
+                    if (updatedOrder.affiliateCode) {
+                        await distributeCommission(updatedOrder.id, updatedOrder.affiliateCode, updatedOrder.totalAmount);
+                    }
+                    await sendOrderConfirmationEmail(updatedOrder as any);
                 }
             }
         }

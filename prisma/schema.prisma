@@ -20,10 +20,18 @@ model User {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   password   String?
-  isAdmin    Boolean    @default(false)
-  downloads  Download[]
-  orders     Order[]
+  isAdmin             Boolean                 @default(false)
+  referrerId          String?
+  commissionBalance   Float                   @default(0)
+  downloads           Download[]
+  orders              Order[]
+  referrer            User?                   @relation("AffiliateNetwork", fields: [referrerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  referrals           User[]                  @relation("AffiliateNetwork")
+  affiliateCodes      AffiliateCode[]
+  commissionsReceived CommissionTransaction[] @relation("Receiver")
+  payoutRequests      PayoutRequest[]
 
+  @@index([referrerId], map: "User_referrerId_fkey")
   @@map("user")
 }
 
@@ -97,9 +105,10 @@ model Order {
   credits     Int
   status      OrderStatus @default(PENDING)
   paymentType String
-  paymentRef  String?     @unique(map: "Order_paymentRef_key")
-  createdAt   DateTime    @default(now())
-  user        User        @relation(fields: [userId], references: [id])
+  paymentRef    String?     @unique(map: "Order_paymentRef_key")
+  affiliateCode String?
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "Order_userId_fkey")
   @@map("order")
@@ -163,6 +172,7 @@ model CustomOrder {
   paymentId     String?     @unique(map: "CustomOrder_paymentId_key")
   paymentMethod String?
   paymentStatus String      @default("UNPAID")
+  affiliateCode String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   wallpaper     Wallpaper   @relation(fields: [wallpaperId], references: [id])
@@ -191,4 +201,63 @@ model Faq {
   updatedAt     DateTime @updatedAt
 
   @@map("faq")
+}
+
+model AffiliateCode {
+  id              String   @id @default(cuid())
+  code            String   @unique(map: "AffiliateCode_code_key")
+  discountPercent Float    @default(0)
+  userId          String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "AffiliateCode_userId_fkey")
+  @@map("affiliate_code")
+}
+
+model CommissionRate {
+  level      Int      @id
+  percentage Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("commission_rate")
+}
+
+model CommissionTransaction {
+  id                String   @id @default(cuid())
+  userId            String
+  fromOrderId       String?
+  fromCustomOrderId String?
+  amount            Float
+  level             Int
+  createdAt         DateTime @default(now())
+
+  user              User     @relation("Receiver", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "CommissionTransaction_userId_fkey")
+  @@index([fromOrderId], map: "CommissionTransaction_fromOrderId_index")
+  @@index([fromCustomOrderId], map: "CommissionTransaction_fromCustomOrderId_index")
+  @@map("commission_transaction")
+}
+
+model PayoutRequest {
+  id        String       @id @default(cuid())
+  userId    String
+  amount    Float
+  status    PayoutStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "PayoutRequest_userId_fkey")
+  @@map("payout_request")
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

@@ -13,7 +13,8 @@ export async function POST(req: Request) {
             zodiac,
             email,
             discountCode,
-            totalAmount
+            totalAmount,
+            affiliateCode
         } = body;
 
         const order = await prisma.customOrder.create({
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
                 zodiac,
                 email,
                 discountCode,
+                affiliateCode: affiliateCode || null,
                 totalAmount: parseFloat(totalAmount),
                 status: 'PENDING'
             },

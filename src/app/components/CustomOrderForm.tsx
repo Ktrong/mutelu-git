@@ -40,6 +40,13 @@ export default function CustomOrderForm() {
     const [showPreview, setShowPreview] = useState(false);
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedCode = localStorage.getItem('affiliateCode');
+            if (savedCode) {
+                setFormData(prev => ({ ...prev, discountCode: savedCode }));
+            }
+        }
+
         const fetchWallpapers = async () => {
             const res = await fetch('/api/wallpapers/with-offerings');
             const data = await res.json();
@@ -130,7 +137,8 @@ export default function CustomOrderForm() {
                 body: JSON.stringify({
                     ...formData,
                     wallpaperId: selectedWp.id,
-                    totalAmount: totalAmount
+                    totalAmount: totalAmount,
+                    affiliateCode: formData.discountCode
                 })
             });
 

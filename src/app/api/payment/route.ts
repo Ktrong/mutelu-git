@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import Omise from 'omise';
+import { distributeCommission } from '@/lib/affiliate';
 
 const omise = Omise({
     publicKey: process.env.OMISE_PUBLIC_KEY,
@@ -52,6 +53,10 @@ export async function POST(req: Request) {
                 paymentMethod: charge.card ? 'CREDIT_CARD' : (charge.source?.type || 'UNKNOWN')
             }
         });
+
+        if (updatedOrder.status === 'SUCCESS' && updatedOrder.affiliateCode) {
+            await distributeCommission(updatedOrder.id, updatedOrder.affiliateCode, updatedOrder.totalAmount);
+        }
 
         return NextResponse.json({
             success: true,
