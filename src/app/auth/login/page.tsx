@@ -31,7 +31,10 @@ export default function LoginPage() {
                 // In a real app, save token to cookies/localStorage
                 localStorage.setItem('user', JSON.stringify(data.user));
                 alert('เข้าสู่ระบบสำเร็จ!');
-                router.push('/');
+
+                const urlParams = new URL(window.location.href);
+                const redirectUrl = urlParams.searchParams.get('redirect');
+                router.push(redirectUrl || '/profile');
             } else {
                 setError(data.error || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
             }

@@ -91,7 +91,7 @@ const Navbar = () => {
                                     <User size={20} />
                                 </Link>
                                 <Link href="/auth/login" className="text-sm font-medium text-gold-dark border border-gold-dark px-4 py-1.5 rounded-full hover:bg-gold-light/20 transition-all">
-                                    Login
+                                    เข้าสู่ระบบ
                                 </Link>
                             </>
                         )}
