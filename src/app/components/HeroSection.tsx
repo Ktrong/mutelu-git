@@ -35,7 +35,7 @@ const HeroSection = () => {
     // Loading State
     if (isLoading) {
         return (
-            <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-cream animate-pulse">
+            <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-var-bg animate-pulse">
                 <div className="text-center">
                     <div className="h-4 bg-gray-200 rounded w-32 mx-auto mb-4"></div>
                     <div className="h-12 bg-gray-200 rounded w-3/4 mx-auto mb-6"></div>
@@ -92,7 +92,7 @@ const HeroSection = () => {
     // If no slideshows, show static
     if (!slideshows || slideshows.length === 0) {
         return (
-            <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-cream">
+            <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-var-bg">
                 {/* Background Effects (Static) */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                     <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gold/10 blur-[100px] animate-pulse"></div>
@@ -114,7 +114,7 @@ const HeroSection = () => {
     const currentSlide = slideshows[currentIndex];
 
     return (
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-cream group">
+        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-var-bg group">
             {/* Dynamic Background */}
             <div className="absolute inset-0 w-full h-full transition-colors duration-1000" style={{ backgroundColor: currentSlide?.bgColor || '#FEF9E7' }}>
                 {/* Background Image if exists */}

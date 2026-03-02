@@ -12,7 +12,7 @@ export default function EditorPage() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
             {/* Left: Preview (Mobile First - Top on mobile) */}
-            <div className="flex-1 bg-cream p-4 md:p-12 flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-200">
+            <div className="flex-1 bg-var-bg p-4 md:p-12 flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-200">
                 <div className="scale-75 md:scale-100 transform origin-center">
                     <PhoneMockup title={title} subtitle={subtitle} />
                 </div>

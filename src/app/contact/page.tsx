@@ -5,7 +5,7 @@ import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, Send } from "lucide-
 
 export default function ContactPage() {
     return (
-        <main className="min-h-screen bg-cream selection:bg-gold-light pb-20 pt-20">
+        <main className="min-h-screen bg-var-bg selection:bg-gold-light pb-20 pt-20">
             <section className="text-center mb-12 px-4 mt-8">
                 <h1 className="text-4xl md:text-5xl font-sarabun font-bold text-gray-900 mb-4 tracking-tight">
                     ติดต่อเรา
@@ -24,7 +24,7 @@ export default function ContactPage() {
 
                             <div className="space-y-6">
                                 <div className="flex items-start space-x-4">
-                                    <div className="bg-cream-dark p-3 rounded-full text-gold-dark">
+                                    <div className="bg-var-bg p-3 rounded-full text-gold-dark">
                                         <Mail size={24} />
                                     </div>
                                     <div>
@@ -34,7 +34,7 @@ export default function ContactPage() {
                                 </div>
 
                                 <div className="flex items-start space-x-4">
-                                    <div className="bg-cream-dark p-3 rounded-full text-gold-dark">
+                                    <div className="bg-var-bg p-3 rounded-full text-gold-dark">
                                         <Phone size={24} />
                                     </div>
                                     <div>
@@ -45,7 +45,7 @@ export default function ContactPage() {
                                 </div>
 
                                 <div className="flex items-start space-x-4">
-                                    <div className="bg-cream-dark p-3 rounded-full text-gold-dark">
+                                    <div className="bg-var-bg p-3 rounded-full text-gold-dark">
                                         <MapPin size={24} />
                                     </div>
                                     <div>
@@ -87,7 +87,7 @@ export default function ContactPage() {
                                     <input
                                         type="text"
                                         id="name"
-                                        className="w-full px-4 py-3 rounded-xl bg-cream-light/50 border border-gray-200 focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-xl bg-var-bg/50 border border-gray-200 focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all"
                                         placeholder="ชื่อของคุณ"
                                     />
                                 </div>
@@ -96,7 +96,7 @@ export default function ContactPage() {
                                     <input
                                         type="email"
                                         id="email"
-                                        className="w-full px-4 py-3 rounded-xl bg-cream-light/50 border border-gray-200 focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-xl bg-var-bg/50 border border-gray-200 focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all"
                                         placeholder="อีเมลของคุณ"
                                     />
                                 </div>
@@ -106,7 +106,7 @@ export default function ContactPage() {
                                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">หัวข้อ</label>
                                 <select
                                     id="subject"
-                                    className="w-full px-4 py-3 rounded-xl bg-cream-light/50 border border-gray-200 focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all appearance-none"
+                                    className="w-full px-4 py-3 rounded-xl bg-var-bg/50 border border-gray-200 focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all appearance-none"
                                 >
                                     <option value="">เลือกหัวข้อติดต่อ</option>
                                     <option value="order">ติดตามคำสั่งซื้อ</option>
@@ -121,7 +121,7 @@ export default function ContactPage() {
                                 <textarea
                                     id="message"
                                     rows={4}
-                                    className="w-full px-4 py-3 rounded-xl bg-cream-light/50 border border-gray-200 focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all resize-none"
+                                    className="w-full px-4 py-3 rounded-xl bg-var-bg/50 border border-gray-200 focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all resize-none"
                                     placeholder="พิมพ์ข้อความของคุณที่นี่..."
                                 ></textarea>
                             </div>

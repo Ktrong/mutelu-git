@@ -7,7 +7,7 @@ export default function AstrologyPage() {
     const [step, setStep] = useState(1);
 
     return (
-        <div className="min-h-screen bg-cream pb-24">
+        <div className="min-h-screen bg-var-bg pb-24">
             {/* Header */}
             <header className="p-6 flex items-center justify-between">
                 <Link href="/" className="text-slate-400">

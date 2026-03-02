@@ -4,11 +4,26 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, User, ShoppingBag, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
+import useSWR from "swr";
+import { useTheme } from "@/context/ThemeContext";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+interface NavigationMenu {
+    id: string;
+    label: string;
+    url: string;
+    alignment: 'LEFT' | 'CENTER' | 'RIGHT';
+    fontSize?: string;
+    fontFamily?: string;
+    color?: string;
+}
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const pathname = usePathname();
+    const { theme } = useTheme();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -23,13 +38,16 @@ const Navbar = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    const navLinks = [
-        { name: "หน้าแรก", href: "/" },
-        { name: "สินค้ายอดนิยม", href: "/#top-products" },
-        { name: "มาใหม่", href: "/#new-arrivals" },
-        { name: "สินค้าทั้งหมด", href: "/products" },
-        { name: "คำถามที่พบบ่อย", href: "/faq" },
-        { name: "ติดต่อเรา", href: "/contact" },
+    const { data: menus } = useSWR<NavigationMenu[]>("/api/menus", fetcher);
+
+    const leftMenus = menus?.filter(m => m.alignment === 'LEFT') || [];
+    const centerMenus = menus?.filter(m => m.alignment === 'CENTER') || [];
+    const rightMenus = menus?.filter(m => m.alignment === 'RIGHT') || [];
+
+    // Fallback nav links if database is empty/loading
+    const navLinks = menus && menus.length > 0 ? menus : [
+        { id: '1', label: "หน้าแรก", url: "/", alignment: 'CENTER' as const, fontSize: 'sm', fontFamily: 'sans', color: '' },
+        { id: '2', label: "สินค้าทั้งหมด", url: "/products", alignment: 'CENTER' as const, fontSize: 'sm', fontFamily: 'sans', color: '' },
     ];
 
     const isAdminRoute = pathname?.startsWith('/admin');
@@ -42,37 +60,97 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? "bg-cream/90 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-4"
+            className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? "bg-var-bg/90 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-4"
                 }`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <Link href={isAdminRoute ? "/admin" : "/"} className="flex-shrink-0 flex items-center">
-                        <span className="font-sarabun font-bold text-2xl text-gold-dark tracking-wider">
-                            MUTELU<span className="text-gold">WALLPAPER</span>
-                            {isAdminRoute && <span className="ml-2 text-xs bg-gold text-white px-2 py-0.5 rounded-full align-middle">ADMIN</span>}
-                        </span>
+                        {theme.logoUrl ? (
+                            <img src={theme.logoUrl} alt="Logo" className="h-10 object-contain" />
+                        ) : (
+                            <span className="font-sarabun font-bold text-2xl text-gold-dark tracking-wider">
+                                MUTELU<span className="text-gold">WALLPAPER</span>
+                                {isAdminRoute && <span className="ml-2 text-xs bg-gold text-white px-2 py-0.5 rounded-full align-middle">ADMIN</span>}
+                            </span>
+                        )}
                     </Link>
 
-                    {/* Desktop Menu - Hide on Admin Pages */}
-                    {!isAdminRoute && (
-                        <div className="hidden md:flex space-x-8 items-center">
-                            {navLinks.map((link) => (
+                    {/* Desktop Menu - Left */}
+                    {!isAdminRoute && leftMenus.length > 0 && (
+                        <div className="hidden md:flex space-x-6 items-center flex-1 justify-start ml-6">
+                            {leftMenus.map((link) => (
                                 <Link
-                                    key={link.name}
-                                    href={link.href}
-                                    className={`text-sm font-medium transition-colors duration-200 hover:text-gold ${pathname === link.href ? "text-gold-dark" : "text-gray-600"
-                                        }`}
+                                    key={link.id}
+                                    href={link.url}
+                                    style={link.color ? { color: link.color } : {}}
+                                    className={`font-bold whitespace-nowrap transition-colors duration-200 hover:opacity-80
+                                        text-${link.fontSize || 'sm'}
+                                        ${link.fontFamily === 'sarabun' ? 'font-sarabun' : link.fontFamily === 'inter' ? 'font-inter' : 'font-sans'}
+                                        ${!link.color && pathname === link.url ? "text-gold-dark" : !link.color ? "text-gray-600" : ""}
+                                    `}
                                 >
-                                    {link.name}
+                                    {link.label}
                                 </Link>
                             ))}
                         </div>
                     )}
 
-                    {/* Icons / Right Side */}
-                    <div className="hidden md:flex items-center space-x-6">
+                    {/* Desktop Menu - Center */}
+                    {!isAdminRoute && (
+                        <div className={`hidden md:flex space-x-8 items-center ${leftMenus.length > 0 ? "flex-none" : "flex-1 justify-center"}`}>
+                            {centerMenus.map((link) => (
+                                <Link
+                                    key={link.id}
+                                    href={link.url}
+                                    style={link.color ? { color: link.color } : {}}
+                                    className={`font-bold whitespace-nowrap transition-colors duration-200 hover:opacity-80
+                                        text-${link.fontSize || 'sm'}
+                                        ${link.fontFamily === 'sarabun' ? 'font-sarabun' : link.fontFamily === 'inter' ? 'font-inter' : 'font-sans'}
+                                        ${!link.color && pathname === link.url ? "text-gold-dark" : !link.color ? "text-gray-600" : ""}
+                                    `}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                            {menus && menus.length === 0 && navLinks.map(link => (
+                                <Link
+                                    key={link.id}
+                                    href={link.url}
+                                    style={link.color ? { color: link.color } : {}}
+                                    className={`font-bold whitespace-nowrap transition-colors duration-200 hover:opacity-80
+                                        text-${link.fontSize || 'sm'}
+                                        ${link.fontFamily === 'sarabun' ? 'font-sarabun' : link.fontFamily === 'inter' ? 'font-inter' : 'font-sans'}
+                                        ${!link.color && pathname === link.url ? "text-gold-dark" : !link.color ? "text-gray-600" : ""}
+                                    `}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Desktop Menu - Right Area & User Icons */}
+                    <div className="hidden md:flex items-center space-x-6 flex-1 justify-end">
+                        {!isAdminRoute && rightMenus.length > 0 && (
+                            <div className="flex space-x-6 items-center mr-6 border-r border-slate-200 pr-6">
+                                {rightMenus.map((link) => (
+                                    <Link
+                                        key={link.id}
+                                        href={link.url}
+                                        style={link.color ? { color: link.color } : {}}
+                                        className={`font-bold whitespace-nowrap transition-colors duration-200 hover:opacity-80
+                                            text-${link.fontSize || 'sm'}
+                                            ${link.fontFamily === 'sarabun' ? 'font-sarabun' : link.fontFamily === 'inter' ? 'font-inter' : 'font-sans'}
+                                            ${!link.color && pathname === link.url ? "text-gold-dark" : !link.color ? "text-gray-600" : ""}
+                                        `}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
                         {isAdminRoute ? (
                             !isLoginPage && (
                                 <button
@@ -122,30 +200,35 @@ const Navbar = () => {
 
             {/* Mobile Menu - Only for non-admin */}
             {!isAdminRoute && isMenuOpen && (
-                <div className="md:hidden bg-cream border-t border-gold/10 absolute w-full shadow-lg">
+                <div className="md:hidden bg-var-bg border-t border-gold/10 absolute w-full shadow-lg">
                     <div className="px-4 pt-2 pb-6 space-y-2">
                         {navLinks.map((link) => (
                             <Link
-                                key={link.name}
-                                href={link.href}
+                                key={link.id}
+                                href={link.url}
                                 onClick={() => setIsMenuOpen(false)}
-                                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gold hover:bg-cream-dark/50 rounded-md transition-all"
+                                style={link.color ? { color: link.color } : {}}
+                                className={`block px-3 py-2 font-bold hover:bg-var-bg/50 hover:opacity-80 rounded-md transition-all
+                                    text-${link.fontSize || 'base'}
+                                    ${link.fontFamily === 'sarabun' ? 'font-sarabun' : link.fontFamily === 'inter' ? 'font-inter' : 'font-sans'}
+                                    ${!link.color ? "text-gray-700 hover:text-gold" : ""}
+                                `}
                             >
-                                {link.name}
+                                {link.label}
                             </Link>
                         ))}
                         <div className="border-t border-gold/20 my-2 pt-2">
                             <Link
                                 href="/profile"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gold hover:bg-cream-dark/50 rounded-md"
+                                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gold hover:bg-var-bg/50 rounded-md"
                             >
                                 โปรไฟล์
                             </Link>
                             <Link
                                 href="/auth/login"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="block px-3 py-2 text-base font-medium text-gold-dark hover:text-gold hover:bg-cream-dark/50 rounded-md"
+                                className="block px-3 py-2 text-base font-medium text-gold-dark hover:text-gold hover:bg-var-bg/50 rounded-md"
                             >
                                 เข้าสู่ระบบ
                             </Link>

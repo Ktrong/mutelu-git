@@ -14,7 +14,7 @@ const FilterableImageGrid = () => {
     // Initial loading state for categories
     if (isCategoriesLoading && !categories) {
         return (
-            <section className="py-16 bg-cream-light/50" id="products">
+            <section className="py-16 bg-var-bg/50" id="products">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12 animate-pulse">
                         <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-4"></div>
@@ -40,7 +40,7 @@ const FilterableImageGrid = () => {
     const allCategories = [{ id: 'All', name: 'ทั้งหมด' }, ...categoriesList];
 
     return (
-        <section className="py-16 bg-cream-light/50" id="products">
+        <section className="py-16 bg-var-bg/50" id="products">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-sarabun font-bold text-gray-900 mb-4">คอลเลกชันแนะนำ</h2>

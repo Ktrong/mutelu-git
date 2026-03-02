@@ -3,7 +3,7 @@ import CustomOrderForm from "../components/CustomOrderForm";
 
 export default function OrderPage() {
     return (
-        <main className="min-h-screen bg-cream py-20 px-4">
+        <main className="min-h-screen bg-var-bg py-20 px-4">
             <div className="max-w-4xl mx-auto text-center mb-10">
                 <h1 className="text-3xl md:text-4xl font-sarabun font-bold text-gray-900 mb-4">
                     สั่งทำวอลเปเปอร์มงคล

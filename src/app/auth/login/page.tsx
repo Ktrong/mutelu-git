@@ -46,7 +46,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-4 py-12">
+        <div className="min-h-screen bg-var-bg flex flex-col items-center justify-center px-4 py-12">
             <div className="w-full max-w-[420px] bg-white/80 backdrop-blur-xl rounded-[3rem] p-10 shadow-2xl border border-white/50 relative overflow-hidden">
                 {/* Decorative background element */}
                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-gold-primary/5 rounded-full blur-3xl"></div>

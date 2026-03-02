@@ -107,7 +107,7 @@ export default function AffiliateApplicationPage() {
 
     if (loading) {
         return (
-            <main className="min-h-screen bg-cream pb-24 pt-[80px] flex items-center justify-center">
+            <main className="min-h-screen bg-var-bg pb-24 pt-[80px] flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
             </main>
         );
@@ -115,7 +115,7 @@ export default function AffiliateApplicationPage() {
 
     if (success) {
         return (
-            <main className="min-h-screen bg-cream pb-24 pt-[80px]">
+            <main className="min-h-screen bg-var-bg pb-24 pt-[80px]">
                 <Header />
                 <div className="px-4 max-w-xl mx-auto pt-10">
                     <div className="bg-white p-8 rounded-[2rem] shadow-lg text-center border border-gold-light/20">
@@ -136,7 +136,7 @@ export default function AffiliateApplicationPage() {
     }
 
     return (
-        <main className="min-h-screen bg-cream pb-24 pt-[80px]">
+        <main className="min-h-screen bg-var-bg pb-24 pt-[80px]">
             <Header />
 
             <div className="px-4 max-w-2xl mx-auto">

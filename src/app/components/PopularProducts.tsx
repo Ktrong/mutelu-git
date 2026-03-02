@@ -11,7 +11,7 @@ export default function PopularProducts() {
     const { wallpapers, isLoading } = useWallpapers(undefined, true);
 
     return (
-        <section className="py-16 bg-cream-light/30 border-y border-gold/10" id="top-products">
+        <section className="py-16 bg-var-bg/30 border-y border-gold/10" id="top-products">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center justify-center p-2 mb-4 bg-white rounded-full shadow-sm">

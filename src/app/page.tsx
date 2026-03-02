@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function Home() {
     return (
-        <main className="min-h-screen bg-cream selection:bg-gold-light pb-20">
+        <main className="min-h-screen bg-var-bg selection:bg-gold-light pb-20">
             <HeroSection />
 
             {/* New Arrivals Section */}

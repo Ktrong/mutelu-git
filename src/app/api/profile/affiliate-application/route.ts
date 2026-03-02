@@ -69,6 +69,7 @@ export async function POST(request: Request) {
                 bankName,
                 bankAccountNo,
                 bankAccountName,
+                bankPassbookImageUrl,
                 status: 'PENDING'
             }
         });

@@ -22,16 +22,24 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: "Invalid data format" }, { status: 400 });
         }
 
-        // We can just upsert them
-        await prisma.$transaction(
-            rates.map((rate: any) =>
+        // Extract incoming levels
+        const incomingLevels = rates.map((r: any) => parseInt(r.level));
+
+        // Delete missing levels, then upsert incoming levels
+        await prisma.$transaction([
+            prisma.commissionRate.deleteMany({
+                where: {
+                    level: { notIn: incomingLevels }
+                }
+            }),
+            ...rates.map((rate: any) =>
                 prisma.commissionRate.upsert({
                     where: { level: parseInt(rate.level) },
                     update: { percentage: parseFloat(rate.percentage) },
                     create: { level: parseInt(rate.level), percentage: parseFloat(rate.percentage) }
                 })
             )
-        );
+        ]);
 
         return NextResponse.json({ success: true });
     } catch (error) {

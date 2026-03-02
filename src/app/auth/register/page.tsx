@@ -48,7 +48,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-4 py-12">
+        <div className="min-h-screen bg-var-bg flex flex-col items-center justify-center px-4 py-12">
             <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-xl border border-gold-light/20">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold gold-text mb-2">สมัครสมาชิก</h1>

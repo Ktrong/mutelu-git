@@ -6,7 +6,7 @@ import { Sparkles } from "lucide-react";
 
 export default function ProductsPage() {
     return (
-        <main className="min-h-screen bg-cream selection:bg-gold-light pb-20 pt-20">
+        <main className="min-h-screen bg-var-bg selection:bg-gold-light pb-20 pt-20">
             {/* Header */}
             <section className="text-center mb-12 px-4">
                 <div className="inline-flex items-center justify-center p-1 mb-4 rounded-full bg-white/50 backdrop-blur-sm border border-gold/20 shadow-sm animate-fade-in-up">

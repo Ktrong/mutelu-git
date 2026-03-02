@@ -291,3 +291,25 @@ enum ApplicationStatus {
   REJECTED
 }
 
+model NavigationMenu {
+  id         String        @id @default(cuid())
+  label      String
+  url        String
+  position   Int           @default(0) // Used for ordering
+  alignment  MenuAlignment @default(CENTER)
+  isActive   Boolean       @default(true)
+  fontSize   String        @default("sm")
+  fontFamily String        @default("sans")
+  color      String        @default("#4B5563")
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@map("navigation_menu")
+}
+
+enum MenuAlignment {
+  LEFT
+  CENTER
+  RIGHT
+}
+

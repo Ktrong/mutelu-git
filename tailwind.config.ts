@@ -30,10 +30,18 @@ const config: Config = {
                     DEFAULT: "#9C27B0", // Deep purple for spirituality accents
                     dark: "#7B1FA2",
                 },
+                var: {
+                    bg: "rgb(var(--custom-bg-color-rgb) / <alpha-value>)",
+                    text: "var(--custom-text-color)"
+                }
             },
             fontFamily: {
                 sarabun: ["var(--font-sarabun)", "sans-serif"],
                 inter: ["var(--font-inter)", "sans-serif"],
+                var: ["var(--custom-font-family)", "sans-serif"]
+            },
+            fontSize: {
+                'var-base': 'var(--custom-font-size)'
             },
             backgroundImage: {
                 "gold-gradient": "linear-gradient(to right, #B8860B, #D4AF37, #F7E0A0)",

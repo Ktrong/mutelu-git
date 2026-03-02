@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent, Menu } from 'lucide-react';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -524,6 +524,12 @@ export default function AdminDashboard() {
                         className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'slideshows' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
                     >
                         <Monitor className="w-4 h-4" /> สไลด์โชว์
+                    </button>
+                    <button
+                        onClick={() => router.push('/admin/menus')}
+                        className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors text-slate-400 hover:bg-white/5"
+                    >
+                        <Menu className="w-4 h-4" /> จัดการเมนู (Navbar)
                     </button>
                     <button
                         onClick={() => setActiveTab('users')}
@@ -1190,6 +1196,21 @@ export default function AdminDashboard() {
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
                                         </div>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`คุณต้องการลบชั้นที่ ${rate.level} ใช่หรือไม่?`)) {
+                                                    const newRates = [...commissionRates];
+                                                    newRates.splice(index, 1);
+                                                    // Reassign level numbers sequentially (1, 2, 3...)
+                                                    const updatedRates = newRates.map((r, i) => ({ ...r, level: i + 1 }));
+                                                    setCommissionRates(updatedRates);
+                                                }
+                                            }}
+                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0"
+                                            title="ลบระดับชั้นนี้"
+                                        >
+                                            <Trash2 className="w-5 h-5 cursor-pointer" />
+                                        </button>
                                     </div>
                                 ))}
                                 <button
@@ -1235,8 +1256,8 @@ export default function AdminDashboard() {
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className={`px-3 py-1 text-[10px] font-bold rounded-full ${payout.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                                                        payout.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                                                            'bg-amber-100 text-amber-700'
+                                                    payout.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                        'bg-amber-100 text-amber-700'
                                                     }`}>
                                                     {payout.status}
                                                 </span>

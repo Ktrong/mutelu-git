@@ -35,7 +35,7 @@ export default function FAQPage() {
     };
 
     return (
-        <main className="min-h-screen bg-cream selection:bg-gold-light pb-20 pt-20">
+        <main className="min-h-screen bg-var-bg selection:bg-gold-light pb-20 pt-20">
             <section className="text-center mb-12 px-4 mt-8">
                 <div className="inline-flex items-center justify-center p-3 mb-6 bg-white rounded-full shadow-md animate-bounce">
                     <HelpCircle className="w-8 h-8 text-gold" />

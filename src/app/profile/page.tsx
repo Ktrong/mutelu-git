@@ -44,7 +44,7 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <main className="min-h-screen bg-cream pb-24 pt-[80px] flex items-center justify-center">
+            <main className="min-h-screen bg-var-bg pb-24 pt-[80px] flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
             </main>
         );
@@ -57,7 +57,7 @@ export default function ProfilePage() {
     const isAffiliate = profileData.affiliateCodes && profileData.affiliateCodes.length > 0;
 
     return (
-        <main className="min-h-screen bg-cream pb-24 pt-[80px]">
+        <main className="min-h-screen bg-var-bg pb-24 pt-[80px]">
             <Header />
 
             <div className="px-4 max-w-2xl mx-auto">
