@@ -124,7 +124,7 @@ const Navbar = () => {
 
                     {/* Desktop Menu - Center (Absolute perfectly centered) */}
                     {!isAdminRoute && (centerMenus.length > 0 || navLinks.length > 0) && (
-                        <div className="hidden md:flex space-x-8 items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-max z-10">
+                        <div className="hidden md:flex space-x-8 items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-max z-20">
                             {centerMenus.map((link) => (
                                 <Link
                                     key={link.id}
