@@ -60,46 +60,71 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? "bg-var-bg/90 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-4"
+            className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? "bg-var-bg/95 backdrop-blur-md shadow-md py-2" : "bg-transparent py-4 md:py-6"
                 }`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
-                    {/* Logo */}
-                    <Link href={isAdminRoute ? "/admin" : "/"} className="flex-shrink-0 flex items-center">
-                        {theme.logoUrl ? (
-                            <img src={theme.logoUrl} alt="Logo" className="h-10 object-contain" />
-                        ) : (
-                            <span className="font-sarabun font-bold text-2xl text-gold-dark tracking-wider">
-                                MUTELU<span className="text-gold">WALLPAPER</span>
-                                {isAdminRoute && <span className="ml-2 text-xs bg-gold text-white px-2 py-0.5 rounded-full align-middle">ADMIN</span>}
-                            </span>
-                        )}
-                    </Link>
+                <div className="flex justify-between items-center h-16 md:h-20 relative">
 
-                    {/* Desktop Menu - Left */}
-                    {!isAdminRoute && leftMenus.length > 0 && (
-                        <div className="hidden md:flex space-x-6 items-center flex-1 justify-start ml-6">
-                            {leftMenus.map((link) => (
-                                <Link
-                                    key={link.id}
-                                    href={link.url}
-                                    style={link.color ? { color: link.color } : {}}
-                                    className={`font-bold whitespace-nowrap transition-colors duration-200 hover:opacity-80
-                                        text-${link.fontSize || 'sm'}
-                                        ${link.fontFamily === 'sarabun' ? 'font-sarabun' : link.fontFamily === 'inter' ? 'font-inter' : 'font-sans'}
-                                        ${!link.color && pathname === link.url ? "text-gold-dark" : !link.color ? "text-gray-600" : ""}
-                                    `}
+                    {/* Mobile Menu Button Display (Left on mobile) */}
+                    <div className="md:hidden flex items-center z-20 absolute left-0 h-full">
+                        {isAdminRoute ? (
+                            !isLoginPage && (
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-red-500 text-sm font-medium"
                                 >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                                    ออกจากระบบ
+                                </button>
+                            )
+                        ) : (
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="text-gray-600 hover:text-gold p-2 transition-colors -ml-2"
+                            >
+                                {isMenuOpen ? <X size={28} strokeWidth={1.5} /> : <Menu size={28} strokeWidth={1.5} />}
+                            </button>
+                        )}
+                    </div>
 
-                    {/* Desktop Menu - Center */}
-                    {!isAdminRoute && (
-                        <div className={`hidden md:flex space-x-8 items-center ${leftMenus.length > 0 ? "flex-none" : "flex-1 justify-center"}`}>
+                    {/* Left Area (Logo + Left Menu on Desktop) */}
+                    <div className="flex items-center z-10 flex-1 justify-center md:justify-start">
+                        {/* Logo */}
+                        <Link href={isAdminRoute ? "/admin" : "/"} className="flex-shrink-0 flex items-center gap-2 group mx-auto md:mx-0">
+                            {theme.logoUrl ? (
+                                <img src={theme.logoUrl} alt="Logo" className="h-10 md:h-16 object-contain transition-transform duration-300 group-hover:scale-105" />
+                            ) : (
+                                <span className="font-sarabun font-extrabold text-xl md:text-3xl text-gold-dark tracking-widest drop-shadow-sm transition-transform duration-300 group-hover:scale-105">
+                                    MUTELU<span className="text-gold">WALLPAPER</span>
+                                    {isAdminRoute && <span className="ml-3 text-xs bg-gold text-white px-2.5 py-1 rounded-full align-middle shadow-sm font-sans tracking-normal hidden md:inline-block">ADMIN</span>}
+                                </span>
+                            )}
+                        </Link>
+
+                        {/* Desktop Menu - Left */}
+                        {!isAdminRoute && leftMenus.length > 0 && (
+                            <div className="hidden md:flex space-x-6 items-center ml-8">
+                                {leftMenus.map((link) => (
+                                    <Link
+                                        key={link.id}
+                                        href={link.url}
+                                        style={link.color ? { color: link.color } : {}}
+                                        className={`font-bold whitespace-nowrap transition-colors duration-200 hover:opacity-80
+                                            text-${link.fontSize || 'sm'}
+                                            ${link.fontFamily === 'sarabun' ? 'font-sarabun' : link.fontFamily === 'inter' ? 'font-inter' : 'font-sans'}
+                                            ${!link.color && pathname === link.url ? "text-gold-dark" : !link.color ? "text-gray-600" : ""}
+                                        `}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop Menu - Center (Absolute perfectly centered) */}
+                    {!isAdminRoute && (centerMenus.length > 0 || navLinks.length > 0) && (
+                        <div className="hidden md:flex space-x-8 items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-max z-10">
                             {centerMenus.map((link) => (
                                 <Link
                                     key={link.id}
@@ -132,7 +157,7 @@ const Navbar = () => {
                     )}
 
                     {/* Desktop Menu - Right Area & User Icons */}
-                    <div className="hidden md:flex items-center space-x-6 flex-1 justify-end">
+                    <div className="hidden md:flex items-center space-x-6 flex-1 justify-end z-10">
                         {!isAdminRoute && rightMenus.length > 0 && (
                             <div className="flex space-x-6 items-center mr-6 border-r border-slate-200 pr-6">
                                 {rightMenus.map((link) => (
@@ -175,26 +200,7 @@ const Navbar = () => {
                         )}
                     </div>
 
-                    {/* Mobile Menu Button - Hide on Admin Pages? Or show streamlined? */}
-                    <div className="md:hidden flex items-center">
-                        {isAdminRoute ? (
-                            !isLoginPage && (
-                                <button
-                                    onClick={handleLogout}
-                                    className="text-red-500"
-                                >
-                                    ออกจากระบบ
-                                </button>
-                            )
-                        ) : (
-                            <button
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="text-gray-600 hover:text-gold p-2 transition-colors"
-                            >
-                                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                            </button>
-                        )}
-                    </div>
+                    {/* Optional: Add empty div on right for mobile to assure centering if needed, but absolute mobile menu button handles it */}
                 </div>
             </div>
 

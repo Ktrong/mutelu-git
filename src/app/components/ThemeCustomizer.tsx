@@ -5,7 +5,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { Settings2, X, Upload, Palette, Type } from "lucide-react";
 
 export default function ThemeCustomizer() {
-    const { theme, updateTheme, resetTheme } = useTheme();
+    const { theme, updateTheme, saveTheme, resetTheme } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
 
@@ -33,8 +33,11 @@ export default function ThemeCustomizer() {
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const tempUrl = URL.createObjectURL(file);
-            updateTheme({ logoUrl: tempUrl });
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                updateTheme({ logoUrl: reader.result as string });
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -169,12 +172,20 @@ export default function ThemeCustomizer() {
             </div>
 
             {/* Footer actions */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
+                <button
+                    onClick={async () => {
+                        await saveTheme();
+                    }}
+                    className="w-full py-2 px-4 rounded-xl text-sm font-bold text-white bg-gold hover:bg-gold-dark transition-colors shadow-md"
+                >
+                    บันทึกการตั้งค่า
+                </button>
                 <button
                     onClick={resetTheme}
-                    className="flex-1 py-2 px-4 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
+                    className="w-full py-2 px-4 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
                 >
-                    คืนค่าเริ่มต้น
+                    คืนค่าเริ่มต้น (ยังไม่บันทึก)
                 </button>
             </div>
         </div>

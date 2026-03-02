@@ -16,6 +16,7 @@ export type ThemeType = typeof DEFAULT_THEME;
 interface ThemeContextType {
     theme: ThemeType;
     updateTheme: (newTheme: Partial<ThemeType>) => void;
+    saveTheme: () => Promise<void>;
     resetTheme: () => void;
 }
 
@@ -38,16 +39,34 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const [theme, setTheme] = useState<ThemeType>(DEFAULT_THEME);
 
-    // Initialize from localStorage on mount
+    // Initialize from API and fallback to localStorage on mount
     useEffect(() => {
-        const savedTheme = localStorage.getItem("siteTheme");
-        if (savedTheme) {
+        const loadTheme = async () => {
             try {
-                setTheme({ ...DEFAULT_THEME, ...JSON.parse(savedTheme) });
-            } catch (e) {
-                console.error("Failed to parse saved theme");
+                const res = await fetch('/api/settings/theme');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.theme) {
+                        setTheme({ ...DEFAULT_THEME, ...data.theme });
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch theme from DB:", error);
             }
-        }
+
+            // Fallback to local storage
+            const savedTheme = localStorage.getItem("siteTheme");
+            if (savedTheme) {
+                try {
+                    setTheme({ ...DEFAULT_THEME, ...JSON.parse(savedTheme) });
+                } catch (e) {
+                    console.error("Failed to parse saved theme");
+                }
+            }
+        };
+
+        loadTheme();
     }, []);
 
     // Sync theme changes to CSS Variables and localStorage
@@ -75,12 +94,27 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         setTheme((prev) => ({ ...prev, ...newSettings }));
     };
 
+    const saveTheme = async () => {
+        try {
+            const res = await fetch('/api/settings/theme', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(theme)
+            });
+            if (!res.ok) throw new Error('Failed to save theme');
+            alert('Theme saved successfully! It is now live for all users.');
+        } catch (error) {
+            console.error("Error saving theme:", error);
+            alert('Failed to save theme to database.');
+        }
+    };
+
     const resetTheme = () => {
         setTheme(DEFAULT_THEME);
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, updateTheme, resetTheme }}>
+        <ThemeContext.Provider value={{ theme, updateTheme, saveTheme, resetTheme }}>
             {children}
         </ThemeContext.Provider>
     );

@@ -34,7 +34,7 @@ export default function RootLayout({
                         <ReferralTracker />
                     </Suspense>
                     <Navbar />
-                    <main className="min-h-screen pt-16">
+                    <main className="min-h-screen pt-24 md:pt-32">
                         {children}
                     </main>
                     <Footer />
