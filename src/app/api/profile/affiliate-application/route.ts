@@ -19,6 +19,7 @@ export async function POST(request: Request) {
         const bankName = formData.get('bankName') as string;
         const bankAccountNo = formData.get('bankAccountNo') as string;
         const bankAccountName = formData.get('bankAccountName') as string;
+        const referrerCode = formData.get('referrerCode') as string;
 
         const idCardImage = formData.get('idCardImage') as File;
         const bankPassbookImage = formData.get('bankPassbookImage') as File;
@@ -56,6 +57,29 @@ export async function POST(request: Request) {
 
         const idCardImageUrl = await saveFile(idCardImage, 'idcard');
         const bankPassbookImageUrl = await saveFile(bankPassbookImage, 'bank');
+
+        // Apply Referral Logic if referrerCode exists
+        if (referrerCode) {
+            const affiliate = await prisma.affiliateCode.findUnique({
+                where: { code: referrerCode },
+                select: { userId: true }
+            });
+
+            if (affiliate && affiliate.userId !== userId) {
+                // Check if user is already linked
+                const currentUser = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { referrerId: true }
+                });
+
+                if (!currentUser?.referrerId) {
+                    await prisma.user.update({
+                        where: { id: userId },
+                        data: { referrerId: affiliate.userId }
+                    });
+                }
+            }
+        }
 
         // Save to DB
         const application = await prisma.affiliateApplication.create({

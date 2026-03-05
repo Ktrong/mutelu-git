@@ -859,9 +859,42 @@ export default function AdminDashboard() {
                                     {affiliateApps.map((app: any) => (
                                         <tr key={app.id} className="text-sm hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-4">
-                                                <div className="text-[10px] text-slate-400">{new Date(app.createdAt).toLocaleString('th-TH')}</div>
-                                                <div className="font-medium text-slate-700">{app.user?.name || '-'}</div>
-                                                <div className="text-xs text-slate-500">{app.user?.email}</div>
+                                                <div className="text-[10px] text-slate-400 mb-1">{new Date(app.createdAt).toLocaleString('th-TH')}</div>
+                                                <div className="font-bold text-slate-800 text-sm">{app.user?.name || '-'}</div>
+                                                <div className="text-xs text-slate-500 mb-2">{app.user?.email}</div>
+
+                                                <div className="text-[10px] bg-slate-50 p-2 rounded border border-slate-100 space-y-1">
+                                                    <div><span className="font-bold text-slate-500">วัน/เวลาเกิด:</span> {app.user?.birthDate ? new Date(app.user.birthDate).toLocaleDateString('th-TH') : '-'} {app.user?.birthTime || ''}</div>
+                                                    <div><span className="font-bold text-slate-500">วัน/ราศี:</span> {app.user?.dayOfWeek || '-'} / {app.user?.zodiacSign || '-'}</div>
+                                                    {app.user?.referrer && (
+                                                        <div className="mt-2 pt-2 border-t border-slate-200">
+                                                            <span className="block text-slate-500 font-bold mb-1 text-[10px]">ผู้แนะนำ:</span>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const fullReferrer = users.find((u: any) => u.id === app.user.referrer.id) || app.user.referrer;
+                                                                    setEditingUser(fullReferrer);
+                                                                    setNewUser({
+                                                                        name: fullReferrer.name || '',
+                                                                        email: fullReferrer.email,
+                                                                        phone: fullReferrer.phone || '',
+                                                                        password: '',
+                                                                        isAdmin: fullReferrer.isAdmin
+                                                                    });
+                                                                    setUserTab(fullReferrer.isAdmin ? 'admin' : (fullReferrer.affiliateCodes?.length ? 'affiliate' : 'user'));
+                                                                    setShowUserModal(true);
+                                                                }}
+                                                                className="text-left w-full hover:bg-blue-50/80 p-1.5 rounded border border-blue-100/50 transition-colors group cursor-pointer block"
+                                                            >
+                                                                <div className="font-bold text-blue-600 group-hover:text-blue-700 text-xs truncate max-w-[120px]">{app.user.referrer.name || app.user.referrer.email}</div>
+                                                                {app.user.referrer.affiliateCodes?.[0] && (
+                                                                    <div className="font-mono text-[9px] bg-blue-100 text-blue-800 px-1 py-0.5 rounded inline-block mt-0.5">
+                                                                        {app.user.referrer.affiliateCodes[0].code}
+                                                                    </div>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 text-xs text-slate-600">
                                                 <div><span className="font-bold">โทร:</span> {app.phoneNumber}</div>

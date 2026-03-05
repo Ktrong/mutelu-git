@@ -4,7 +4,15 @@ import prisma from '@/lib/prisma';
 export async function GET() {
     try {
         const applications = await prisma.affiliateApplication.findMany({
-            include: { user: true },
+            include: {
+                user: {
+                    include: {
+                        referrer: {
+                            include: { affiliateCodes: true }
+                        }
+                    }
+                }
+            },
             orderBy: { createdAt: 'desc' }
         });
         return NextResponse.json(applications);

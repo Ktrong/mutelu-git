@@ -18,7 +18,8 @@ export default function AffiliateApplicationPage() {
         idCardNumber: '',
         bankName: '',
         bankAccountNo: '',
-        bankAccountName: ''
+        bankAccountName: '',
+        referrerCode: ''
     });
 
     const [idCardImage, setIdCardImage] = useState<File | null>(null);
@@ -33,6 +34,13 @@ export default function AffiliateApplicationPage() {
                 checkExistingApplication(parsedUser.id);
             } else {
                 window.location.href = '/auth/login?redirect=/profile/affiliate';
+            }
+
+            // Check for referral code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            if (refCode) {
+                setFormData(prev => ({ ...prev, referrerCode: refCode }));
             }
         }
     }, []);
@@ -162,6 +170,10 @@ export default function AffiliateApplicationPage() {
                                 ข้อมูลการติดต่อ
                             </h3>
                             <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 mb-1">รหัสผู้แนะนำ (ถ้ามี)</label>
+                                    <input type="text" name="referrerCode" value={formData.referrerCode} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none bg-white" placeholder="เช่น AFXXXX" />
+                                </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label>
                                     <input type="tel" name="phoneNumber" required value={formData.phoneNumber} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="08X-XXX-XXXX" />

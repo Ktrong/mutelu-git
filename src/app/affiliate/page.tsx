@@ -13,6 +13,9 @@ export default function AffiliateDashboard() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'codes' | 'team' | 'payouts'>('overview');
 
+    const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
+    const [filterMonth, setFilterMonth] = useState((new Date().getMonth() + 1).toString());
+
     const [newCodeName, setNewCodeName] = useState('');
     const [creatingCode, setCreatingCode] = useState(false);
 
@@ -34,11 +37,15 @@ export default function AffiliateDashboard() {
         }
     }, []);
 
-    const fetchData = async (userId: string) => {
+    const fetchData = async (userId: string, year = filterYear, month = filterMonth) => {
         setLoading(true);
         try {
+            const queryParams = new URLSearchParams({ userId });
+            if (year) queryParams.append('year', year);
+            if (month) queryParams.append('month', month);
+
             const [dashRes, codeRes, payoutRes] = await Promise.all([
-                fetch(`/api/affiliate/dashboard?userId=${userId}`),
+                fetch(`/api/affiliate/dashboard?${queryParams.toString()}`),
                 fetch(`/api/affiliate/codes?userId=${userId}`),
                 fetch(`/api/affiliate/payout?userId=${userId}`)
             ]);
@@ -136,6 +143,37 @@ export default function AffiliateDashboard() {
                     <LogOut className="w-4 h-4" />
                     ออกจากระบบ
                 </button>
+            </div>
+
+            {/* Filter */}
+            <div className="flex justify-end gap-3 mb-6">
+                <select
+                    value={filterMonth}
+                    onChange={(e) => {
+                        setFilterMonth(e.target.value);
+                        if (user) fetchData(user.id, filterYear, e.target.value);
+                    }}
+                    className="border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 bg-white shadow-sm"
+                >
+                    <option value="">ทุกเดือน</option>
+                    {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i + 1} value={String(i + 1)}>{new Date(0, i).toLocaleString('th-TH', { month: 'long' })}</option>
+                    ))}
+                </select>
+                <select
+                    value={filterYear}
+                    onChange={(e) => {
+                        setFilterYear(e.target.value);
+                        if (user) fetchData(user.id, e.target.value, filterMonth);
+                    }}
+                    className="border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 bg-white shadow-sm"
+                >
+                    <option value="">ทุกปี</option>
+                    {Array.from({ length: 5 }, (_, i) => {
+                        const y = new Date().getFullYear() - i;
+                        return <option key={y} value={String(y)}>{y + 543}</option>;
+                    })}
+                </select>
             </div>
 
             {/* Top Stat Cards */}
@@ -284,8 +322,9 @@ export default function AffiliateDashboard() {
                                 <thead className="bg-slate-50 text-slate-600">
                                     <tr>
                                         <th className="px-4 py-3 font-semibold">ชื่อ / อีเมล</th>
-                                        <th className="px-4 py-3 font-semibold">ระดับชั้น</th>
-                                        <th className="px-4 py-3 font-semibold">วันที่สมัคร</th>
+                                        <th className="px-4 py-3 font-semibold text-center">ระดับชั้น</th>
+                                        <th className="px-4 py-3 font-semibold text-right">ยอดขาย (ช่วงเวลาที่กรอง)</th>
+                                        <th className="px-4 py-3 font-semibold text-right">วันที่สมัคร</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -300,11 +339,14 @@ export default function AffiliateDashboard() {
                                                     <p className="font-semibold text-slate-800">{member.name || '-'}</p>
                                                     <p className="text-xs text-slate-500">{member.email}</p>
                                                 </td>
-                                                <td className="px-4 py-3">
+                                                <td className="px-4 py-3 text-center">
                                                     <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-md font-bold">Level 1</span>
                                                 </td>
-                                                <td className="px-4 py-3 text-slate-500">
-                                                    {new Date(member.createdAt).toLocaleDateString()}
+                                                <td className="px-4 py-3 text-right font-bold text-green-600">
+                                                    ฿{member.totalSales?.toFixed(2) || '0.00'}
+                                                </td>
+                                                <td className="px-4 py-3 text-slate-500 text-right">
+                                                    {new Date(member.createdAt).toLocaleDateString('th-TH')}
                                                 </td>
                                             </tr>
                                         ))
