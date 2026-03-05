@@ -22,8 +22,20 @@ interface NavigationMenu {
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const pathname = usePathname();
     const { theme } = useTheme();
+
+    useEffect(() => {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            try {
+                setCurrentUser(JSON.parse(userData));
+            } catch (e) {
+                console.error("Failed to parse user data", e);
+            }
+        }
+    }, [pathname]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -53,8 +65,14 @@ const Navbar = () => {
     const isAdminRoute = pathname?.startsWith('/admin');
     const isLoginPage = pathname === '/admin/login';
 
-    const handleLogout = () => {
+    const handleAdminLogout = () => {
         localStorage.removeItem('adminUser');
+        window.location.href = '/';
+    };
+
+    const handleUserLogout = () => {
+        localStorage.removeItem('user');
+        setCurrentUser(null);
         window.location.href = '/';
     };
 
@@ -71,7 +89,7 @@ const Navbar = () => {
                         {isAdminRoute ? (
                             !isLoginPage && (
                                 <button
-                                    onClick={handleLogout}
+                                    onClick={handleAdminLogout}
                                     className="text-red-500 text-sm font-medium"
                                 >
                                     ออกจากระบบ
@@ -179,7 +197,7 @@ const Navbar = () => {
                         {isAdminRoute ? (
                             !isLoginPage && (
                                 <button
-                                    onClick={handleLogout}
+                                    onClick={handleAdminLogout}
                                     className="text-sm font-medium text-red-500 border border-red-500 px-4 py-1.5 rounded-full hover:bg-red-50 transition-all flex items-center gap-2"
                                 >
                                     ออกจากระบบ
@@ -193,9 +211,18 @@ const Navbar = () => {
                                 <Link href="/profile" className="text-gray-600 hover:text-gold transition-colors">
                                     <User size={20} />
                                 </Link>
-                                <Link href="/auth/login" className="text-sm font-medium text-gold-dark border border-gold-dark px-4 py-1.5 rounded-full hover:bg-gold-light/20 transition-all">
-                                    เข้าสู่ระบบ
-                                </Link>
+                                {currentUser ? (
+                                    <button
+                                        onClick={handleUserLogout}
+                                        className="text-sm font-medium text-red-500 border border-red-500 px-4 py-1.5 rounded-full hover:bg-red-50 transition-all"
+                                    >
+                                        ออกจากระบบ
+                                    </button>
+                                ) : (
+                                    <Link href="/auth/login" className="text-sm font-medium text-gold-dark border border-gold-dark px-4 py-1.5 rounded-full hover:bg-gold-light/20 transition-all">
+                                        เข้าสู่ระบบ
+                                    </Link>
+                                )}
                             </>
                         )}
                     </div>
@@ -231,13 +258,25 @@ const Navbar = () => {
                             >
                                 โปรไฟล์
                             </Link>
-                            <Link
-                                href="/auth/login"
-                                onClick={() => setIsMenuOpen(false)}
-                                className="block px-3 py-2 text-base font-medium text-gold-dark hover:text-gold hover:bg-var-bg/50 rounded-md"
-                            >
-                                เข้าสู่ระบบ
-                            </Link>
+                            {currentUser ? (
+                                <button
+                                    onClick={() => {
+                                        setIsMenuOpen(false);
+                                        handleUserLogout();
+                                    }}
+                                    className="w-full text-left block px-3 py-2 text-base font-medium text-red-500 hover:bg-var-bg/50 rounded-md"
+                                >
+                                    ออกจากระบบ
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/auth/login"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="block px-3 py-2 text-base font-medium text-gold-dark hover:text-gold hover:bg-var-bg/50 rounded-md"
+                                >
+                                    เข้าสู่ระบบ
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>

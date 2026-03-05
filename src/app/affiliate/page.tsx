@@ -113,10 +113,7 @@ export default function AffiliateDashboard() {
         setRequestingPayout(false);
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        window.location.href = '/auth/login?redirect=/affiliate';
-    };
+
 
 
     if (loading) {
@@ -134,15 +131,7 @@ export default function AffiliateDashboard() {
             <div className="flex justify-between items-start mb-2">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800">Affiliate Dashboard</h1>
-                    <p className="text-slate-500">จัดการเครือข่าย ค่าคอมมิชชั่น และลิงก์แนะนำของคุณในที่เดียว</p>
                 </div>
-                <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-xl transition-all font-semibold text-sm border border-slate-200"
-                >
-                    <LogOut className="w-4 h-4" />
-                    ออกจากระบบ
-                </button>
             </div>
 
             {/* Filter */}
@@ -189,7 +178,12 @@ export default function AffiliateDashboard() {
                 <div className="bg-white rounded-2xl p-6 text-slate-800 shadow-md border border-slate-100 flex items-center justify-between">
                     <div>
                         <p className="text-slate-500 text-sm font-semibold mb-1">สมาชิกในทีม (Team)</p>
-                        <h2 className="text-3xl font-bold">{stats.team.level1} <span className="text-base font-normal text-slate-400">คน</span></h2>
+                        <h2 className="text-3xl font-bold">{stats.team.totalMembers || 0} <span className="text-base font-normal text-slate-400">คน</span></h2>
+                        <div className="flex gap-2 mt-2 text-[10px] font-bold">
+                            <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">G1: {stats.team.level1 || 0}</span>
+                            <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded">G2: {stats.team.level2 || 0}</span>
+                            <span className="text-bronze-600 bg-orange-50 px-2 py-0.5 rounded" style={{ color: '#b87333' }}>G3: {stats.team.level3 || 0}</span>
+                        </div>
                     </div>
                     <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
                         <Users className="w-6 h-6" />
@@ -315,7 +309,7 @@ export default function AffiliateDashboard() {
                 {activeTab === 'team' && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <h3 className="text-lg font-bold text-slate-800">ทีมสายงาน (Downlines)</h3>
-                        <p className="text-sm text-slate-500 mb-4">รายชื่อสมาชิกที่สมัครผ่านลิงก์แนะนำของคุณ (Level 1)</p>
+                        <p className="text-sm text-slate-500 mb-4">รายชื่อสมาชิกที่อยู่ภายใต้สายงานของคุณ (แสดงสูงสุด 3 ระดับชั้น)</p>
 
                         <div className="border border-slate-100 rounded-xl overflow-hidden">
                             <table className="w-full text-left text-sm">
@@ -340,7 +334,15 @@ export default function AffiliateDashboard() {
                                                     <p className="text-xs text-slate-500">{member.email}</p>
                                                 </td>
                                                 <td className="px-4 py-3 text-center">
-                                                    <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-md font-bold">Level 1</span>
+                                                    {member.level === 1 ? (
+                                                        <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-md font-bold">Level 1 (ลูก)</span>
+                                                    ) : member.level === 2 ? (
+                                                        <span className="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-md font-bold">Level 2 (หลาน)</span>
+                                                    ) : member.level === 3 ? (
+                                                        <span className="bg-orange-100 text-xs px-2 py-1 rounded-md font-bold" style={{ color: '#b87333' }}>Level 3 (เหลน)</span>
+                                                    ) : (
+                                                        <span className="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded-md font-bold">Level {member.level}</span>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-bold text-green-600">
                                                     ฿{member.totalSales?.toFixed(2) || '0.00'}
@@ -433,6 +435,6 @@ export default function AffiliateDashboard() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

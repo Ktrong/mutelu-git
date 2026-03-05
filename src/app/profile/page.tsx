@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { User, Settings, Package, History, LogOut, CheckCircle, Clock } from "lucide-react";
+import { User, Settings, Package, History, CheckCircle, Clock } from "lucide-react";
 import Link from 'next/link';
 
 export default function ProfilePage() {
@@ -36,10 +36,7 @@ export default function ProfilePage() {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        window.location.href = '/auth/login?redirect=/';
-    };
+
 
     if (loading) {
         return (
@@ -133,13 +130,7 @@ export default function ProfilePage() {
                     </Link>
                 </div>
 
-                <button
-                    onClick={handleLogout}
-                    className="w-full bg-white hover:bg-red-50 text-red-500 font-bold py-4 rounded-[1.5rem] flex items-center justify-center gap-2 border border-red-100 transition-colors shadow-sm"
-                >
-                    <LogOut className="w-5 h-5" />
-                    ออกจากระบบ
-                </button>
+
             </div>
         </main>
     );

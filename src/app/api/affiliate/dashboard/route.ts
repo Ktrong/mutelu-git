@@ -74,9 +74,37 @@ export async function GET(req: Request) {
             totalOrders = orders.length;
         }
 
-        // Build simple team view (Direct referrals = Level 1)
-        const allReferralCodes = user.referrals.flatMap(r => r.affiliateCodes.map(c => c.code));
+        // Fetch up to 3 levels of downlines
+        let teamMembers: any[] = [];
+        let currentLevelMembers = user.referrals;
+        let currentLevel = 1;
+
+        while (currentLevelMembers.length > 0 && currentLevel <= 3) {
+            // Tag each with their level
+            const taggedMembers = currentLevelMembers.map(m => ({ ...m, level: currentLevel }));
+            teamMembers = [...teamMembers, ...taggedMembers];
+
+            // Fetch next level down (children of current level)
+            const parentIds = currentLevelMembers.map(m => m.id);
+            const nextLevelData = await prisma.user.findMany({
+                where: { referrerId: { in: parentIds } },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    createdAt: true,
+                    affiliateCodes: { select: { code: true } }
+                }
+            });
+
+            currentLevelMembers = nextLevelData;
+            currentLevel++;
+        }
+
+        // Aggregate All Downline Sales
+        const allReferralCodes = teamMembers.flatMap(m => m.affiliateCodes.map((c: any) => c.code));
         let referralSalesMap = {} as Record<string, number>;
+
         if (allReferralCodes.length > 0) {
             const refOrders = await prisma.customOrder.findMany({
                 where: {
@@ -96,9 +124,9 @@ export async function GET(req: Request) {
             }
         }
 
-        const membersWithSales = user.referrals.map(member => {
+        const membersWithSales = teamMembers.map(member => {
             let sales = 0;
-            member.affiliateCodes.forEach(c => {
+            member.affiliateCodes.forEach((c: any) => {
                 sales += referralSalesMap[c.code] || 0;
             });
             return {
@@ -106,12 +134,16 @@ export async function GET(req: Request) {
                 name: member.name,
                 email: member.email,
                 createdAt: member.createdAt,
+                level: member.level,
                 totalSales: sales
             };
         });
 
         const teamView = {
-            level1: user.referrals.length,
+            totalMembers: teamMembers.length,
+            level1: teamMembers.filter(m => m.level === 1).length,
+            level2: teamMembers.filter(m => m.level === 2).length,
+            level3: teamMembers.filter(m => m.level === 3).length,
             members: membersWithSales
         };
 
