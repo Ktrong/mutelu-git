@@ -337,23 +337,24 @@ export default function AdminMenusPage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">ตำแหน่ง (Alignment)</label>
-                                        <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200">
-                                            {(['LEFT', 'CENTER', 'RIGHT'] as MenuAlignment[]).map((align) => (
-                                                <button
-                                                    key={align}
-                                                    type="button"
-                                                    onClick={() => setCurrentMenu({ ...currentMenu, alignment: align })}
-                                                    className={`flex-1 py-2 flex justify-center items-center gap-2 text-xs font-bold rounded-lg transition-all ${currentMenu.alignment === align
-                                                        ? 'bg-white shadow-sm text-gold border border-slate-200'
-                                                        : 'text-slate-400 hover:text-slate-600'
-                                                        }`}
-                                                >
-                                                    {alignmentIcon(align)}
-                                                    {align}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">สถานะการแสดงผล</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCurrentMenu({ ...currentMenu, isActive: !currentMenu.isActive })}
+                                            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all ${currentMenu.isActive
+                                                ? 'bg-green-50 border-green-200 text-green-700'
+                                                : 'bg-slate-50 border-slate-200 text-slate-400'
+                                                }`}
+                                        >
+                                            <span className="text-sm font-bold">
+                                                {currentMenu.isActive ? '✓ แสดงใน Navbar' : '✗ ซ่อน (ไม่แสดง)'}
+                                            </span>
+                                            <div className={`w-10 h-5 rounded-full transition-colors relative ${currentMenu.isActive ? 'bg-green-400' : 'bg-slate-300'
+                                                }`}>
+                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${currentMenu.isActive ? 'translate-x-5' : 'translate-x-0.5'
+                                                    }`} />
+                                            </div>
+                                        </button>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
@@ -517,6 +518,7 @@ export default function AdminMenusPage() {
                             </div>
                         </div>
                     </div>
+                </div>
             </main>
         </div>
     );
