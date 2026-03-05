@@ -31,13 +31,75 @@ export default function CustomOrderForm() {
         dayOfWeek: 'วันอาทิตย์',
         zodiac: 'มังกร',
         email: '',
+        phone: '',
         discountCode: ''
     });
+    const [bDay, setBDay] = useState('');
+    const [bMonth, setBMonth] = useState('');
+    const [bYear, setBYear] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'promptpay' | 'card'>('promptpay');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState('');
     const [qrCodeUrl, setQrCodeUrl] = useState('');
     const [showPreview, setShowPreview] = useState(false);
+    const [maxDays, setMaxDays] = useState(31);
+
+    // Calculate Max Days
+    useEffect(() => {
+        if (bMonth && bYear) {
+            const m = parseInt(bMonth);
+            const y = parseInt(bYear) - 543; // convert to AD
+            const daysInMonth = new Date(y, m, 0).getDate();
+            setMaxDays(daysInMonth);
+
+            // Auto reset day if currently selected day is greater than max days
+            if (bDay && parseInt(bDay) > daysInMonth) {
+                setBDay(daysInMonth.toString());
+            }
+        } else {
+            setMaxDays(31);
+        }
+    }, [bMonth, bYear]);
+
+    // Zodiac and Day of Week Calculation
+    useEffect(() => {
+        if (bDay && bMonth && bYear) {
+            const d = parseInt(bDay);
+            const m = parseInt(bMonth);
+            const y = parseInt(bYear);
+
+            // Calculate Day of Week
+            const yAD = y - 543;
+            const date = new Date(yAD, m - 1, d);
+            const daysThai = ["วันอาทิตย์", "วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสบดี", "วันศุกร์", "วันเสาร์"];
+            const calculatedDayStr = daysThai[date.getDay()];
+
+            // Calculate Zodiac
+            let zName = formData.zodiac;
+            if ((m === 4 && d >= 13) || (m === 5 && d <= 14)) zName = "เมษ";
+            else if ((m === 5 && d >= 15) || (m === 6 && d <= 14)) zName = "พฤษภ";
+            else if ((m === 6 && d >= 15) || (m === 7 && d <= 14)) zName = "เมถุน";
+            else if ((m === 7 && d >= 15) || (m === 8 && d <= 15)) zName = "กรกฎ";
+            else if ((m === 8 && d >= 16) || (m === 9 && d <= 16)) zName = "สิงห์";
+            else if ((m === 9 && d >= 17) || (m === 10 && d <= 16)) zName = "กันย์";
+            else if ((m === 10 && d >= 17) || (m === 11 && d <= 15)) zName = "ตุลย์";
+            else if ((m === 11 && d >= 16) || (m === 12 && d <= 15)) zName = "พิจิก";
+            else if ((m === 12 && d >= 16) || (m === 1 && d <= 14)) zName = "ธนู";
+            else if ((m === 1 && d >= 15) || (m === 2 && d <= 12)) zName = "มังกร";
+            else if ((m === 2 && d >= 13) || (m === 3 && d <= 14)) zName = "กุมภ์";
+            else if ((m === 3 && d >= 15) || (m === 4 && d <= 12)) zName = "มีน";
+
+            const monthsThai = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+            const createdDateStr = `${d} ${monthsThai[m - 1]} ${y}`;
+
+            setFormData(prev => ({
+                ...prev,
+                birthDate: createdDateStr,
+                dayOfWeek: calculatedDayStr,
+                zodiac: zName
+            }));
+        }
+    }, [bDay, bMonth, bYear]);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -329,12 +391,50 @@ export default function CustomOrderForm() {
 
                     <div>
                         <label className="block text-xs font-bold mb-1 ml-1">วัน เดือน ปีเกิด (พ.ศ.)</label>
-                        <input
-                            type="text" required placeholder="เช่น 1 มกราคม 2530"
-                            className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
-                            value={formData.birthDate}
-                            onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                        />
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="relative">
+                                <select required
+                                    className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none appearance-none cursor-pointer"
+                                    value={bDay} onChange={(e) => setBDay(e.target.value)}
+                                >
+                                    <option value="" disabled>วัน</option>
+                                    {[...Array(maxDays)].map((_, i) => (
+                                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FFA048]" />
+                            </div>
+                            <div className="relative">
+                                <select required
+                                    className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none appearance-none cursor-pointer"
+                                    value={bMonth} onChange={(e) => setBMonth(e.target.value)}
+                                >
+                                    <option value="" disabled>เดือน</option>
+                                    {[
+                                        { v: '1', l: 'ม.ค.' }, { v: '2', l: 'ก.พ.' }, { v: '3', l: 'มี.ค.' },
+                                        { v: '4', l: 'เม.ย.' }, { v: '5', l: 'พ.ค.' }, { v: '6', l: 'มิ.ย.' },
+                                        { v: '7', l: 'ก.ค.' }, { v: '8', l: 'ส.ค.' }, { v: '9', l: 'ก.ย.' },
+                                        { v: '10', l: 'ต.ค.' }, { v: '11', l: 'พ.ย.' }, { v: '12', l: 'ธ.ค.' }
+                                    ].map(m => (
+                                        <option key={m.v} value={m.v}>{m.l}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FFA048]" />
+                            </div>
+                            <div className="relative">
+                                <select required
+                                    className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none appearance-none cursor-pointer"
+                                    value={bYear} onChange={(e) => setBYear(e.target.value)}
+                                >
+                                    <option value="" disabled>ปี พ.ศ.</option>
+                                    {[...Array(100)].map((_, i) => {
+                                        const year = new Date().getFullYear() + 543 - i;
+                                        return <option key={year} value={year}>{year}</option>;
+                                    })}
+                                </select>
+                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FFA048]" />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -371,9 +471,19 @@ export default function CustomOrderForm() {
                     </div>
 
                     <div>
+                        <label className="block text-xs font-bold mb-1 ml-1">เบอร์โทรศัพท์ (สำหรับรับ SMS ดาวน์โหลดวอล์เปเปอร์)</label>
+                        <input
+                            type="tel"
+                            className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
                         <label className="block text-xs font-bold mb-1 ml-1">อีเมล</label>
                         <input
-                            type="email" required
+                            type="email"
                             className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}

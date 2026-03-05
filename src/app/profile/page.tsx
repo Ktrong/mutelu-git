@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Header from "../components/Header";
 import { User, Settings, Package, History, LogOut, CheckCircle, Clock } from "lucide-react";
 import Link from 'next/link';
 
@@ -57,8 +56,7 @@ export default function ProfilePage() {
     const isAffiliate = profileData.affiliateCodes && profileData.affiliateCodes.length > 0;
 
     return (
-        <main className="min-h-screen bg-var-bg pb-24 pt-[80px]">
-            <Header />
+        <main className="pb-24">
 
             <div className="px-4 max-w-2xl mx-auto">
                 <h1 className="text-2xl font-bold text-slate-800 mb-6 mt-4">บัญชีของฉัน</h1>

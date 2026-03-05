@@ -12,6 +12,7 @@ export async function POST(req: Request) {
             dayOfWeek,
             zodiac,
             email,
+            phone,
             discountCode,
             totalAmount,
             affiliateCode
@@ -24,7 +25,8 @@ export async function POST(req: Request) {
                 birthDate,
                 dayOfWeek,
                 zodiac,
-                email,
+                email: email || null,
+                phone: phone || null,
                 discountCode,
                 affiliateCode: affiliateCode || null,
                 totalAmount: parseFloat(totalAmount),

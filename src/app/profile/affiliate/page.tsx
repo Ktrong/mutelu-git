@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Header from "../../components/Header";
 import { ArrowLeft, Upload, CheckCircle } from "lucide-react";
 import Link from 'next/link';
 
@@ -115,8 +114,7 @@ export default function AffiliateApplicationPage() {
 
     if (success) {
         return (
-            <main className="min-h-screen bg-var-bg pb-24 pt-[80px]">
-                <Header />
+            <main className="pb-24">
                 <div className="px-4 max-w-xl mx-auto pt-10">
                     <div className="bg-white p-8 rounded-[2rem] shadow-lg text-center border border-gold-light/20">
                         <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -136,8 +134,7 @@ export default function AffiliateApplicationPage() {
     }
 
     return (
-        <main className="min-h-screen bg-var-bg pb-24 pt-[80px]">
-            <Header />
+        <main className="pb-24">
 
             <div className="px-4 max-w-2xl mx-auto">
                 <div className="flex items-center gap-3 mb-6 mt-4">

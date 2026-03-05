@@ -6,11 +6,12 @@ import crypto from "crypto";
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
     try {
         const body = await req.json();
-        const { name, email, password, isAdmin } = body;
+        const { name, email, phone, password, isAdmin } = body;
 
         const data: any = {
             name,
             email,
+            phone,
             isAdmin
         };
 

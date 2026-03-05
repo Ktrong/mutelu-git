@@ -57,12 +57,19 @@ export default function PhoneMockup({
                         {/* Watermark */}
                         {showWatermark && (
                             <div className="absolute inset-0 z-30 pointer-events-none flex flex-col items-center justify-center opacity-40 overflow-hidden">
-                                <div className="grid grid-cols-2 gap-x-20 gap-y-32 -rotate-45 scale-150">
-                                    {[...Array(6)].map((_, i) => (
-                                        <span key={i} className="text-white font-bold text-[10px] tracking-widest whitespace-nowrap drop-shadow-sm">
-                                            www.callmemu.com
-                                        </span>
-                                    ))}
+                                <div className="grid grid-cols-4 gap-x-8 gap-y-16 -rotate-12 scale-[2.2]">
+                                    {[...Array(48)].map((_, i) => {
+                                        const sizes = ['text-[6px]', 'text-[9px]', 'text-[12px]', 'text-[7px]'];
+                                        const opacities = ['opacity-20', 'opacity-40', 'opacity-30', 'opacity-50'];
+                                        return (
+                                            <span
+                                                key={i}
+                                                className={`text-white font-black tracking-[0.2em] whitespace-nowrap drop-shadow-md cursor-default select-none ${sizes[i % sizes.length]} ${opacities[i % opacities.length]}`}
+                                            >
+                                                www.callmemu.com
+                                            </span>
+                                        );
+                                    })}
                                 </div>
                                 {/* Center large watermark */}
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-[2px] px-3 py-1 rounded-full border border-white/20">

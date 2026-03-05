@@ -12,8 +12,8 @@ function getResendClient(): Resend | null {
 
 export async function sendOrderConfirmationEmail(order: any) {
     const client = getResendClient();
-    if (!client) {
-        console.warn("RESEND_API_KEY is not set. Skipping email.");
+    if (!client || !order.email) {
+        if (!client) console.warn("RESEND_API_KEY is not set. Skipping email.");
         return;
     }
 

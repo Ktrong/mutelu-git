@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent, Menu } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent, Menu, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -29,6 +29,8 @@ export default function AdminDashboard() {
 
     const [commissionRates, setCommissionRates] = useState<any[]>([{ level: 1, percentage: 10 }, { level: 2, percentage: 5 }, { level: 3, percentage: 2 }]);
     const [payoutsList, setPayoutsList] = useState<any[]>([]);
+
+    const [affiliateApps, setAffiliateApps] = useState<any[]>([]);
 
     // Form state for Wallpaper
     const [newWallpaper, setNewWallpaper] = useState({
@@ -110,9 +112,12 @@ export default function AdminDashboard() {
     const [newUser, setNewUser] = useState({
         name: '',
         email: '',
+        phone: '',
         password: '',
         isAdmin: false
     });
+    const [userTab, setUserTab] = useState<'admin' | 'affiliate' | 'user'>('admin');
+    const [userSearchTerm, setUserSearchTerm] = useState('');
 
     // Form state for Category
     const [newCategory, setNewCategory] = useState({
@@ -178,14 +183,15 @@ export default function AdminDashboard() {
 
     const fetchData = async () => {
         try {
-            const [wpRes, catRes, userRes, slideRes, faqRes, commRes, payRes] = await Promise.all([
+            const [wpRes, catRes, userRes, slideRes, faqRes, commRes, payRes, affiliateAppRes] = await Promise.all([
                 fetch('/api/wallpapers'),
                 fetch('/api/categories'),
                 fetch('/api/admin/users'),
                 fetch('/api/slideshows'),
                 fetch('/api/faqs'),
                 fetch('/api/admin/commissions'),
-                fetch('/api/admin/payouts')
+                fetch('/api/admin/payouts'),
+                fetch('/api/admin/affiliate-applications')
             ]);
             const wpData = await wpRes.json();
             const catData = await catRes.json();
@@ -194,6 +200,7 @@ export default function AdminDashboard() {
             const faqData = await faqRes.json();
             const commData = await commRes.json();
             const payData = await payRes.json();
+            const affiliateAppsData = await affiliateAppRes.json();
             const orderRes = await fetch('/api/orders');
             const orderData = await orderRes.json();
 
@@ -204,6 +211,7 @@ export default function AdminDashboard() {
             setFaqs(Array.isArray(faqData) ? faqData : []);
             setCommissionRates(Array.isArray(commData) && commData.length > 0 ? commData : [{ level: 1, percentage: 10 }, { level: 2, percentage: 5 }, { level: 3, percentage: 2 }]);
             setPayoutsList(Array.isArray(payData) ? payData : []);
+            setAffiliateApps(Array.isArray(affiliateAppsData) ? affiliateAppsData : []);
             setOrders(Array.isArray(orderData) ? orderData : []);
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -225,7 +233,7 @@ export default function AdminDashboard() {
                 setShowUserModal(false);
                 setEditingUser(null);
                 fetchData();
-                setNewUser({ name: '', email: '', password: '', isAdmin: false });
+                setNewUser({ name: '', email: '', phone: '', password: '', isAdmin: false });
             }
         } catch (error) {
             console.error("Error saving user:", error);
@@ -538,6 +546,12 @@ export default function AdminDashboard() {
                         <Users className="w-4 h-4" /> สมาชิก/แอดมิน
                     </button>
                     <button
+                        onClick={() => setActiveTab('affiliate-apps')}
+                        className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'affiliate-apps' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
+                    >
+                        <Users className="w-4 h-4" /> คำขอเป็นตัวแทน
+                    </button>
+                    <button
                         onClick={() => setActiveTab('orders')}
                         className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'orders' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
                     >
@@ -690,7 +704,7 @@ export default function AdminDashboard() {
                 {activeTab === 'users' && (
                     <>
                         <header className="flex justify-between items-center mb-8">
-                            <h1 className="text-2xl font-bold text-slate-800">จัดการผู้ใช้งาน</h1>
+                            <h1 className="text-2xl font-bold text-slate-800">จัดการผู้ใช้งาน (สมาชิก / แอดมิน)</h1>
                             <button
                                 onClick={() => setShowUserModal(true)}
                                 className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all"
@@ -699,57 +713,226 @@ export default function AdminDashboard() {
                             </button>
                         </header>
 
+                        {/* Users Tabs and Search */}
+                        <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
+                            <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto whitespace-nowrap">
+                                <button
+                                    onClick={() => setUserTab('admin')}
+                                    className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors flex-1 md:flex-none ${userTab === 'admin' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    แอดมิน
+                                </button>
+                                <button
+                                    onClick={() => setUserTab('affiliate')}
+                                    className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors flex-1 md:flex-none ${userTab === 'affiliate' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    ตัวแทนจำหน่าย
+                                </button>
+                                <button
+                                    onClick={() => setUserTab('user')}
+                                    className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors flex-1 md:flex-none ${userTab === 'user' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    สมาชิกทั่วไป
+                                </button>
+                            </div>
+                            <div className="relative w-full md:w-64">
+                                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    placeholder="ค้นหาชื่อ, อีเมล, เบอร์โทร..."
+                                    className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-gold-primary/30 text-sm"
+                                    value={userSearchTerm}
+                                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Filtered Users Table */}
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left font-sans">
+                                    <thead className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        <tr>
+                                            <th className="px-6 py-4">ชื่อ</th>
+                                            <th className="px-6 py-4">อีเมล</th>
+                                            <th className="px-6 py-4">เบอร์โทร</th>
+                                            <th className="px-6 py-4 text-center">สถานะ</th>
+                                            <th className="px-6 py-4">สมัครเมื่อ</th>
+                                            <th className="px-6 py-4 text-right">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {users.filter(u => {
+                                            // 1. Filter by Tab
+                                            if (userTab === 'admin' && !u.isAdmin) return false;
+                                            const isAffiliate = !u.isAdmin && u.affiliateCodes && u.affiliateCodes.length > 0;
+                                            if (userTab === 'affiliate' && !isAffiliate) return false;
+                                            if (userTab === 'user' && (u.isAdmin || isAffiliate)) return false;
+
+                                            // 2. Filter by Search Term
+                                            const term = userSearchTerm.toLowerCase();
+                                            if (term) {
+                                                const nameMatch = u.name?.toLowerCase().includes(term);
+                                                const emailMatch = u.email?.toLowerCase().includes(term);
+                                                const phoneMatch = u.phone?.toLowerCase().includes(term);
+                                                if (!nameMatch && !emailMatch && !phoneMatch) return false;
+                                            }
+
+                                            return true;
+                                        }).map((u: any) => (
+                                            <tr key={u.id} className="text-sm hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-6 py-4 font-medium text-slate-700 whitespace-nowrap">{u.name || '-'}</td>
+                                                <td className="px-6 py-4 text-slate-500">{u.email}</td>
+                                                <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{u.phone || '-'}</td>
+                                                <td className="px-6 py-4 text-center">
+                                                    {u.isAdmin ? (
+                                                        <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-gold-primary/10 text-gold-primary border border-gold-primary/20">
+                                                            ADMIN
+                                                        </span>
+                                                    ) : u.affiliateCodes && u.affiliateCodes.length > 0 ? (
+                                                        <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                                                            AFFILIATE: {u.affiliateCodes[0].code}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                                            USER
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-400 text-xs whitespace-nowrap">
+                                                    {new Date(u.createdAt).toLocaleDateString('th-TH')}
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUser(u);
+                                                                setNewUser({
+                                                                    name: u.name || '',
+                                                                    email: u.email,
+                                                                    phone: u.phone || '',
+                                                                    password: '',
+                                                                    isAdmin: u.isAdmin
+                                                                });
+                                                                setShowUserModal(true);
+                                                            }}
+                                                            className="p-2 text-slate-400 hover:text-gold-primary transition-colors"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteUser(u.id)}
+                                                            className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {activeTab === 'affiliate-apps' && (
+                    <>
+                        <header className="flex justify-between items-center mb-8">
+                            <h1 className="text-2xl font-bold text-slate-800">คำขอเป็นตัวแทนจำหน่าย</h1>
+                        </header>
+
                         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                             <table className="w-full text-left font-sans">
                                 <thead className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     <tr>
-                                        <th className="px-6 py-4">ชื่อ</th>
-                                        <th className="px-6 py-4">อีเมล</th>
-                                        <th className="px-6 py-4 text-center">สิทธิ์</th>
-                                        <th className="px-6 py-4">สมัครเมื่อ</th>
-                                        <th className="px-6 py-4 text-right">จัดการ</th>
+                                        <th className="px-6 py-4">วันที่ / ลูกค้า</th>
+                                        <th className="px-6 py-4">ข้อมูลติดต่อ</th>
+                                        <th className="px-6 py-4">ข้อมูลบัญชี/บัตร ปชช.</th>
+                                        <th className="px-6 py-4 text-center">เอกสาร</th>
+                                        <th className="px-6 py-4 text-center">สถานะ</th>
+                                        <th className="px-6 py-4 text-right">ดำเนินการ</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {users.map((u: any) => (
-                                        <tr key={u.id} className="text-sm hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-slate-700">{u.name || '-'}</td>
-                                            <td className="px-6 py-4 text-slate-500">{u.email}</td>
+                                    {affiliateApps.map((app: any) => (
+                                        <tr key={app.id} className="text-sm hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="text-[10px] text-slate-400">{new Date(app.createdAt).toLocaleString('th-TH')}</div>
+                                                <div className="font-medium text-slate-700">{app.user?.name || '-'}</div>
+                                                <div className="text-xs text-slate-500">{app.user?.email}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-slate-600">
+                                                <div><span className="font-bold">โทร:</span> {app.phoneNumber}</div>
+                                                <div className="line-clamp-2"><span className="font-bold">ที่อยู่:</span> {app.address}</div>
+                                                <div className="line-clamp-1"><span className="font-bold">Social:</span> {app.socialLinks}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-slate-600">
+                                                <div><span className="font-bold">บัตร ปชช.:</span> {app.idCardNumber}</div>
+                                                <div><span className="font-bold">ธนาคาร:</span> {app.bankName}</div>
+                                                <div><span className="font-bold">เลขบัญชี:</span> {app.bankAccountNo}</div>
+                                                <div><span className="font-bold">ชื่อบัญชี:</span> {app.bankAccountName}</div>
+                                            </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${u.isAdmin ? 'bg-gold-primary/10 text-gold-primary border border-gold-primary/20' : 'bg-slate-100 text-slate-400'}`}>
-                                                    {u.isAdmin ? 'ADMIN' : 'USER'}
+                                                <div className="flex gap-2 justify-center">
+                                                    <a href={app.idCardImageUrl} target="_blank" rel="noreferrer" className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-100">ดูบัตร</a>
+                                                    <a href={app.bankPassbookImageUrl} target="_blank" rel="noreferrer" className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-bold hover:bg-emerald-100">ดูสมุดบัญชี</a>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`px-3 py-1 text-[10px] font-bold rounded-full ${app.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                                    app.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                        'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                    {app.status === 'APPROVED' ? 'อนุมัติ' : app.status === 'REJECTED' ? 'ปฏิเสธ' : 'รอตรวจสอบ'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-400 text-xs">
-                                                {new Date(u.createdAt).toLocaleDateString('th-TH')}
-                                            </td>
                                             <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingUser(u);
-                                                            setNewUser({
-                                                                name: u.name || '',
-                                                                email: u.email,
-                                                                password: '', // Don't pre-fill password
-                                                                isAdmin: u.isAdmin
-                                                            });
-                                                            setShowUserModal(true);
-                                                        }}
-                                                        className="p-2 text-slate-400 hover:text-gold-primary transition-colors"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteUser(u.id)}
-                                                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
+                                                {app.status === 'PENDING' && (
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm('ยืนยันอนุมัติการสมัครเป็นตัวแทน?')) {
+                                                                    await fetch(`/api/admin/affiliate-applications/${app.id}`, {
+                                                                        method: 'PUT',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ status: 'APPROVED' })
+                                                                    });
+                                                                    fetchData();
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-bold hover:bg-green-600"
+                                                        >
+                                                            อนุมัติ
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm('ยืนยันปฏิเสธการสมัคร?')) {
+                                                                    await fetch(`/api/admin/affiliate-applications/${app.id}`, {
+                                                                        method: 'PUT',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ status: 'REJECTED' })
+                                                                    });
+                                                                    fetchData();
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600"
+                                                        >
+                                                            ปฏิเสธ
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
+                                    {affiliateApps.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic font-sans">
+                                                ยังไม่มีคำขอในระบบ
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -1828,8 +2011,8 @@ export default function AdminDashboard() {
             {
                 showUserModal && (
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-sans">
-                        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
-                            <h2 className="text-xl font-bold text-slate-800 mb-6">
+                        <div className="bg-white w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
+                            <h2 className="text-xl font-bold text-slate-800 mb-6 sticky top-0 bg-white z-10 py-2">
                                 {editingUser ? 'แก้ไขบัญชีแอดมิน/สมาชิก' : 'เพิ่มบัญชีแอดมิน'}
                             </h2>
                             <form onSubmit={handleSubmitUser} className="space-y-4">
@@ -1852,6 +2035,15 @@ export default function AdminDashboard() {
                                     />
                                 </div>
                                 <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">เบอร์โทรศัพท์ (ถ้ามี)</label>
+                                    <input
+                                        type="tel"
+                                        className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
+                                        value={newUser.phone}
+                                        onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">
                                         {editingUser ? 'รหัสผ่าน (เว้นว่างไว้ถ้าไม่เปลี่ยน)' : 'รหัสผ่าน'}
                                     </label>
@@ -1862,15 +2054,66 @@ export default function AdminDashboard() {
                                         onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 px-1">
-                                    <input
-                                        type="checkbox" id="isAdminCheckbox"
-                                        className="w-4 h-4 rounded border-slate-300 text-gold-primary focus:ring-gold-primary"
-                                        checked={newUser.isAdmin}
-                                        onChange={(e) => setNewUser({ ...newUser, isAdmin: e.target.checked })}
-                                    />
-                                    <label htmlFor="isAdminCheckbox" className="text-sm font-medium text-slate-700 cursor-pointer">ตั้งเป็นแอดมิน (Admin Role)</label>
-                                </div>
+                                {(!editingUser || userTab === 'admin') && (
+                                    <div className="flex items-center gap-2 px-1">
+                                        <input
+                                            type="checkbox" id="isAdminCheckbox"
+                                            className="w-4 h-4 rounded border-slate-300 text-gold-primary focus:ring-gold-primary"
+                                            checked={newUser.isAdmin}
+                                            onChange={(e) => setNewUser({ ...newUser, isAdmin: e.target.checked })}
+                                        />
+                                        <label htmlFor="isAdminCheckbox" className="text-sm font-medium text-slate-700 cursor-pointer">ตั้งเป็นแอดมิน (Admin Role)</label>
+                                    </div>
+                                )}
+
+                                {editingUser && (userTab === 'user' || userTab === 'affiliate') && (
+                                    <div className="bg-slate-50 p-4 rounded-xl space-y-2 mt-4 border border-slate-100">
+                                        <h3 className="text-xs font-bold text-slate-700 mb-2 uppercase">ข้อมูลโปรไฟล์ (Profile Data)</h3>
+                                        <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">วันเกิด</span> {editingUser.birthDate ? new Date(editingUser.birthDate).toLocaleDateString('th-TH') : '-'}</div>
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">เวลาเกิด</span> {editingUser.birthTime || '-'}</div>
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">วันในสัปดาห์</span> {editingUser.dayOfWeek || '-'}</div>
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">ราศี</span> {editingUser.zodiacSign || '-'}</div>
+                                            <div className="col-span-2"><span className="block font-bold text-slate-400 mb-0.5">ที่อยู่</span> {editingUser.address || '-'}</div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {editingUser && userTab === 'affiliate' && editingUser.affiliateApplication && (
+                                    <div className="bg-blue-50/50 p-4 rounded-xl space-y-3 mt-4 border border-blue-100">
+                                        <h3 className="text-xs font-bold text-blue-800 mb-2 uppercase flex items-center gap-1">
+                                            <Star className="w-3.5 h-3.5" /> ข้อมูลตัวแทนจำหน่าย (Affiliate Data)
+                                        </h3>
+
+                                        {/* Codes & Balance */}
+                                        <div className="grid grid-cols-2 gap-3 text-xs text-slate-700 bg-white p-3 rounded-lg border border-blue-50 shadow-sm">
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">รหัสตัวแทน</span> <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-bold">{editingUser.affiliateCodes?.[0]?.code || '-'}</span></div>
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">ยอดคอมมิชชันสะสม</span> <span className="font-bold text-green-600">฿{editingUser.commissionBalance?.toLocaleString() || '0'}</span></div>
+                                        </div>
+
+                                        {/* Application Info */}
+                                        <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">ชื่อ-นามสกุล (ที่สมัคร)</span> {editingUser.affiliateApplication.fullName || '-'}</div>
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">เบอร์ติดต่อ</span> {editingUser.affiliateApplication.phone || '-'}</div>
+                                            <div><span className="block font-bold text-slate-400 mb-0.5">Line ID</span> {editingUser.affiliateApplication.lineId || '-'}</div>
+                                            <div className="col-span-2 overflow-hidden text-ellipsis"><span className="block font-bold text-slate-400 mb-0.5">Facebook/Social</span> <a href={editingUser.affiliateApplication.facebookUrl || '#'} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{editingUser.affiliateApplication.facebookUrl || '-'}</a></div>
+                                            <div className="col-span-2 border-t border-blue-100 pt-2 mt-1">
+                                                <span className="block font-bold text-slate-400 mb-1">ข้อมูลบัญชีรับเงิน</span>
+                                                <p className="font-medium text-slate-700">{editingUser.affiliateApplication.bankName} - {editingUser.affiliateApplication.bankAccount}</p>
+                                                <p className="text-[10px] bg-slate-100 p-1.5 rounded inline-block mt-1 font-medium">ชื่อบัญชี: {editingUser.affiliateApplication.bankAccountName}</p>
+                                            </div>
+
+                                            <div className="col-span-2 grid grid-cols-2 gap-2 mt-1">
+                                                <a href={editingUser.affiliateApplication.idCardImage} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1 p-2 bg-white border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors shadow-sm cursor-pointer">
+                                                    <ImageIcon className="w-3 h-3" /> <span className="font-bold">ดูรูปบัตร ปชช.</span>
+                                                </a>
+                                                <a href={editingUser.affiliateApplication.bankBookImage} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1 p-2 bg-white border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors shadow-sm cursor-pointer">
+                                                    <ImageIcon className="w-3 h-3" /> <span className="font-bold">ดูรูปสมุดบัญชี</span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="flex gap-3 pt-4">
                                     <button
@@ -1878,7 +2121,7 @@ export default function AdminDashboard() {
                                         onClick={() => {
                                             setShowUserModal(false);
                                             setEditingUser(null);
-                                            setNewUser({ name: '', email: '', password: '', isAdmin: false });
+                                            setNewUser({ name: '', email: '', phone: '', password: '', isAdmin: false });
                                         }}
                                         className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
                                     >

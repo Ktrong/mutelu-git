@@ -3,7 +3,11 @@ import { useState } from "react";
 import { Menu, ShoppingCart } from "lucide-react";
 import NavMenu from "./NavMenu";
 
-export default function Header() {
+interface HeaderProps {
+    showTitle?: boolean;
+}
+
+export default function Header({ showTitle = true }: HeaderProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
@@ -16,9 +20,11 @@ export default function Header() {
                     <Menu size={24} />
                 </button>
 
-                <h1 className="text-lg font-bold tracking-[0.2em] ml-4">
-                    IUCRATIVE
-                </h1>
+                {showTitle && (
+                    <h1 className="text-lg font-bold tracking-[0.2em] ml-4">
+                        IUCRATIVE
+                    </h1>
+                )}
 
                 <button className="p-2 hover:bg-white/10 rounded-full transition-colors relative">
                     <ShoppingCart size={24} />

@@ -168,7 +168,8 @@ model CustomOrder {
   birthDate     String
   dayOfWeek     String
   zodiac        String
-  email         String
+  email         String?
+  phone         String?
   discountCode  String?
   totalAmount   Float
   status        OrderStatus @default(PENDING)

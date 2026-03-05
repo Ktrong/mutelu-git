@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "../../components/Header";
 import { User, Phone, MapPin, Save, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -100,8 +99,7 @@ export default function EditProfilePage() {
     }
 
     return (
-        <main className="min-h-screen bg-var-bg pb-24 pt-[80px]">
-            <Header />
+        <main className="pb-24">
 
             <div className="px-4 max-w-2xl mx-auto">
                 <div className="flex items-center gap-3 mb-6 mt-4">
