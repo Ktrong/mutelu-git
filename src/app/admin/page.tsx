@@ -7,6 +7,13 @@ import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plu
 export default function AdminDashboard() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('dashboard');
+
+    useEffect(() => {
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            setActiveTab(hash);
+        }
+    }, []);
     const [wallpapers, setWallpapers] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
@@ -34,6 +41,15 @@ export default function AdminDashboard() {
     const [filterAppMonth, setFilterAppMonth] = useState('');
     const [filterAppYear, setFilterAppYear] = useState('');
     const [filterAppStatus, setFilterAppStatus] = useState('');
+
+    const [paymentChannels, setPaymentChannels] = useState<any[]>([]);
+    const [showPaymentChannelModal, setShowPaymentChannelModal] = useState(false);
+    const [editingPaymentChannel, setEditingPaymentChannel] = useState<any>(null);
+    const [newPaymentChannel, setNewPaymentChannel] = useState({
+        promptPayNo: '',
+        accountName: '',
+        isActive: true
+    });
 
     // Form state for Wallpaper
     const [newWallpaper, setNewWallpaper] = useState({
@@ -186,7 +202,7 @@ export default function AdminDashboard() {
 
     const fetchData = async () => {
         try {
-            const [wpRes, catRes, userRes, slideRes, faqRes, commRes, payRes, affiliateAppRes] = await Promise.all([
+            const [wpRes, catRes, userRes, slideRes, faqRes, commRes, payRes, affiliateAppRes, channelRes] = await Promise.all([
                 fetch('/api/wallpapers'),
                 fetch('/api/categories'),
                 fetch('/api/admin/users'),
@@ -194,7 +210,8 @@ export default function AdminDashboard() {
                 fetch('/api/faqs'),
                 fetch('/api/admin/commissions'),
                 fetch('/api/admin/payouts'),
-                fetch('/api/admin/affiliate-applications')
+                fetch('/api/admin/affiliate-applications'),
+                fetch('/api/admin/payment-channels')
             ]);
             const wpData = await wpRes.json();
             const catData = await catRes.json();
@@ -204,6 +221,7 @@ export default function AdminDashboard() {
             const commData = await commRes.json();
             const payData = await payRes.json();
             const affiliateAppsData = await affiliateAppRes.json();
+            const channelData = await channelRes.json();
             const orderRes = await fetch('/api/orders');
             const orderData = await orderRes.json();
 
@@ -215,6 +233,7 @@ export default function AdminDashboard() {
             setCommissionRates(Array.isArray(commData) && commData.length > 0 ? commData : [{ level: 1, percentage: 10 }, { level: 2, percentage: 5 }, { level: 3, percentage: 2 }]);
             setPayoutsList(Array.isArray(payData) ? payData : []);
             setAffiliateApps(Array.isArray(affiliateAppsData) ? affiliateAppsData : []);
+            setPaymentChannels(Array.isArray(channelData) ? channelData : []);
             setOrders(Array.isArray(orderData) ? orderData : []);
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -500,12 +519,44 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleSubmitPaymentChannel = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const url = editingPaymentChannel ? `/api/admin/payment-channels/${editingPaymentChannel.id}` : '/api/admin/payment-channels';
+            const method = editingPaymentChannel ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPaymentChannel)
+            });
+            if (res.ok) {
+                setShowPaymentChannelModal(false);
+                setEditingPaymentChannel(null);
+                fetchData();
+                setNewPaymentChannel({ promptPayNo: '', accountName: '', isActive: true });
+            }
+        } catch (error) {
+            console.error("Error saving payment channel:", error);
+        }
+    };
+
+    const handleDeletePaymentChannel = async (id: string) => {
+        if (!confirm('ยืนยันลบช่องทางรับเงินนี้?')) return;
+        try {
+            await fetch(`/api/admin/payment-channels/${id}`, { method: 'DELETE' });
+            fetchData();
+        } catch (error) {
+            console.error("Error deleting payment channel:", error);
+        }
+    };
+
     if (isAuthenticating) return null;
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full">
+            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full overflow-y-auto">
                 <div className="p-6">
                     <h2 className="text-2xl font-bold gold-text">Iucrative</h2>
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Admin Console</p>
@@ -577,6 +628,15 @@ export default function AdminDashboard() {
                         className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'payouts' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
                     >
                         <DollarSign className="w-4 h-4" /> แจ้งถอนเงิน
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('payment-channels')}
+                        className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'payment-channels'
+                            ? 'bg-white/10 text-white'
+                            : 'text-slate-400 hover:bg-white/5'
+                            }`}
+                    >
+                        <DollarSign className="w-4 h-4" /> ช่องทางรับเงิน
                     </button>
                 </nav>
 
@@ -1590,6 +1650,77 @@ export default function AdminDashboard() {
                         </div>
                     </>
                 )}
+                {activeTab === 'payment-channels' && (
+                    <>
+                        <header className="flex justify-between items-center mb-8">
+                            <h1 className="text-2xl font-bold text-slate-800">จัดการช่องทางรับเงิน</h1>
+                            <button
+                                onClick={() => {
+                                    setEditingPaymentChannel(null);
+                                    setNewPaymentChannel({ promptPayNo: '', accountName: '', isActive: true });
+                                    setShowPaymentChannelModal(true);
+                                }}
+                                className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+                            >
+                                <Plus className="w-4 h-4" /> เพิ่มช่องทางใหม่
+                            </button>
+                        </header>
+
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <table className="w-full text-left font-sans">
+                                <thead className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <tr>
+                                        <th className="px-6 py-4">พร้อมเพย์ / เลขบัญชี</th>
+                                        <th className="px-6 py-4">ชื่อบัญชี</th>
+                                        <th className="px-6 py-4 text-center">สถานะ</th>
+                                        <th className="px-6 py-4 text-right">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {paymentChannels.length === 0 ? (
+                                        <tr><td colSpan={4} className="text-center py-8 text-slate-400">ยังไม่มีข้อมูลช่องทางรับเงิน</td></tr>
+                                    ) : (
+                                        paymentChannels.map((channel: any) => (
+                                            <tr key={channel.id} className="text-sm hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-6 py-4 font-mono font-bold text-slate-700">{channel.promptPayNo}</td>
+                                                <td className="px-6 py-4 text-slate-600">{channel.accountName}</td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${channel.isActive ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                        {channel.isActive ? 'เปิดรับเงิน' : 'ปิด'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingPaymentChannel(channel);
+                                                                setNewPaymentChannel({
+                                                                    promptPayNo: channel.promptPayNo,
+                                                                    accountName: channel.accountName,
+                                                                    isActive: channel.isActive
+                                                                });
+                                                                setShowPaymentChannelModal(true);
+                                                            }}
+                                                            className="p-2 text-slate-400 hover:text-gold-primary transition-colors"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeletePaymentChannel(channel.id)}
+                                                            className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
             </main>
 
             {/* Modals... */}
@@ -1619,6 +1750,8 @@ export default function AdminDashboard() {
                                             placeholder="เช่น มีวิธีดาวน์โหลดอย่างไร?"
                                             value={newFaq.question}
                                             onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
                                     <div className="col-span-2">
@@ -1629,6 +1762,8 @@ export default function AdminDashboard() {
                                             placeholder="คำอธิบาย..."
                                             value={newFaq.answer}
                                             onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
 
@@ -1713,6 +1848,8 @@ export default function AdminDashboard() {
                                             className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
                                             value={newWallpaper.title}
                                             onChange={(e) => setNewWallpaper({ ...newWallpaper, title: e.target.value })}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
                                     <div>
@@ -1722,6 +1859,8 @@ export default function AdminDashboard() {
                                             className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
                                             value={newWallpaper.categoryId}
                                             onChange={(e) => setNewWallpaper({ ...newWallpaper, categoryId: e.target.value })}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดเลือกหมวดหมู่')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         >
                                             <option value="">เลือกหมวดหมู่</option>
                                             {categories.map((cat: any) => (
@@ -1749,6 +1888,8 @@ export default function AdminDashboard() {
                                             className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
                                             value={newWallpaper.price}
                                             onChange={(e) => setNewWallpaper({ ...newWallpaper, price: parseInt(e.target.value) })}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
                                     <div>
@@ -1789,6 +1930,8 @@ export default function AdminDashboard() {
                                                     setPreviewUrl(URL.createObjectURL(file));
                                                 }
                                             }}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดอัปโหลดรูปภาพ')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
                                 </div>
@@ -1857,6 +2000,8 @@ export default function AdminDashboard() {
                                                 value={newWallpaper.relatedWallpaperId}
                                                 onChange={(e) => setNewWallpaper({ ...newWallpaper, relatedWallpaperId: e.target.value })}
                                                 required={newWallpaper.isOffering}
+                                                onInvalid={(e) => (e.target as any).setCustomValidity('โปรดเลือกวอลเปเปอร์หลัก')}
+                                                onInput={(e) => (e.target as any).setCustomValidity('')}
                                             >
                                                 <option value="">เลือกวอลเปเปอร์หลัก</option>
                                                 {wallpapers.filter((w: any) => !w.isOffering).map((wp: any) => (
@@ -2118,6 +2263,8 @@ export default function AdminDashboard() {
                                         className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
                                         value={newUser.name}
                                         onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                                        onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                        onInput={(e) => (e.target as any).setCustomValidity('')}
                                     />
                                 </div>
                                 <div>
@@ -2127,6 +2274,8 @@ export default function AdminDashboard() {
                                         className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
                                         value={newUser.email}
                                         onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                                        onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                        onInput={(e) => (e.target as any).setCustomValidity('')}
                                     />
                                 </div>
                                 <div>
@@ -2147,6 +2296,8 @@ export default function AdminDashboard() {
                                         className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-gold-primary/30 outline-none text-sm"
                                         value={newUser.password}
                                         onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                        onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                        onInput={(e) => (e.target as any).setCustomValidity('')}
                                     />
                                 </div>
                                 {(!editingUser || userTab === 'admin') && (
@@ -2266,6 +2417,8 @@ export default function AdminDashboard() {
                                             className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
                                             value={newCategory.name}
                                             onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
                                     <div>
@@ -2433,6 +2586,8 @@ export default function AdminDashboard() {
                                             className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
                                             value={newSlideshow.title}
                                             onChange={(e) => setNewSlideshow({ ...newSlideshow, title: e.target.value })}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
                                     <div>
@@ -2471,6 +2626,8 @@ export default function AdminDashboard() {
                                             className="w-full p-3 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm"
                                             value={newSlideshow.buttonText}
                                             onChange={(e) => setNewSlideshow({ ...newSlideshow, buttonText: e.target.value })}
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
                                 </div>
@@ -2555,6 +2712,81 @@ export default function AdminDashboard() {
                                         className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl"
                                     >
                                         {editingSlideshow ? 'บันทึกการแก้ไข' : 'สร้างสไลด์'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
+            {
+                showPaymentChannelModal && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-800">{editingPaymentChannel ? 'แก้ไขช่องทางรับเงิน' : 'เพิ่มช่องทางรับเงิน'}</h3>
+                                    <p className="text-xs text-slate-400 font-bold tracking-widest mt-1">PromptPay Configuration</p>
+                                </div>
+                                <button onClick={() => { setShowPaymentChannelModal(false); setEditingPaymentChannel(null); }} className="p-2 hover:bg-white rounded-full transition-colors shadow-sm ring-1 ring-slate-200">
+                                    <X className="w-5 h-5 text-slate-400" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSubmitPaymentChannel} className="p-8 space-y-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">เบอร์พร้อมเพย์ / เลขบัตรประชาชน</label>
+                                    <input
+                                        type="text" required
+                                        className="w-full p-4 rounded-2xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm focus:ring-slate-900 transition-all font-mono font-bold"
+                                        placeholder="เช่น 0812345678 หรือ 1234567890123"
+                                        value={newPaymentChannel.promptPayNo}
+                                        onChange={(e) => setNewPaymentChannel({ ...newPaymentChannel, promptPayNo: e.target.value })}
+                                        onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                        onInput={(e) => (e.target as any).setCustomValidity('')}
+                                    />
+                                    <p className="text-[10px] text-slate-400 mt-2 font-bold px-1">*แนะนำใช้เบอร์โทรศัพท์ที่ผูกไว้กับ PromptPay หรือ National ID แบบไม่มีขีด</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">ชื่อบัญชีรับเงิน</label>
+                                    <input
+                                        type="text" required
+                                        className="w-full p-4 rounded-2xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm focus:ring-slate-900 transition-all font-medium"
+                                        placeholder="นาย/นาง/นางสาว สมปอง นามสมมุติ"
+                                        value={newPaymentChannel.accountName}
+                                        onChange={(e) => setNewPaymentChannel({ ...newPaymentChannel, accountName: e.target.value })}
+                                        onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                        onInput={(e) => (e.target as any).setCustomValidity('')}
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-3 pt-2">
+                                    <input
+                                        type="checkbox"
+                                        id="isActive"
+                                        checked={newPaymentChannel.isActive}
+                                        onChange={(e) => setNewPaymentChannel({ ...newPaymentChannel, isActive: e.target.checked })}
+                                        className="w-5 h-5 accent-slate-900"
+                                    />
+                                    <label htmlFor="isActive" className="text-sm font-bold text-slate-700 cursor-pointer">
+                                        เปิดใช้งานช่องทางนี้
+                                    </label>
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowPaymentChannelModal(false); setEditingPaymentChannel(null); }}
+                                        className="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-2xl hover:bg-slate-200 transition-colors"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        บันทึกข้อมูล
                                     </button>
                                 </div>
                             </form>

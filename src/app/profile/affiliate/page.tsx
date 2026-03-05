@@ -176,7 +176,7 @@ export default function AffiliateApplicationPage() {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label>
-                                    <input type="tel" name="phoneNumber" required value={formData.phoneNumber} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="08X-XXX-XXXX" />
+                                    <input type="tel" name="phoneNumber" required value={formData.phoneNumber} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="08X-XXX-XXXX" onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')} onInput={(e) => (e.target as any).setCustomValidity('')} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">ช่องทางโซเชียลมีเดีย (Facebook, IG, TikTok, ฯลฯ)</label>
@@ -184,7 +184,7 @@ export default function AffiliateApplicationPage() {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">ที่อยู่ปัจจุบัน <span className="text-red-500">*</span></label>
-                                    <textarea name="address" required value={formData.address} onChange={handleInputChange} rows={3} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="บ้านเลขที่, ถนน, ตำบล, อำเภอ, จังหวัด, รหัสไปรษณีย์"></textarea>
+                                    <textarea name="address" required value={formData.address} onChange={handleInputChange} rows={3} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="บ้านเลขที่, ถนน, ตำบล, อำเภอ, จังหวัด, รหัสไปรษณีย์" onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')} onInput={(e) => (e.target as any).setCustomValidity('')}></textarea>
                                 </div>
                             </div>
                         </div>
@@ -198,12 +198,12 @@ export default function AffiliateApplicationPage() {
                             <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">เลขประจำตัวประชาชน (13 หลัก) <span className="text-red-500">*</span></label>
-                                    <input type="text" name="idCardNumber" required maxLength={13} value={formData.idCardNumber} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="X-XXXX-XXXXX-XX-X" />
+                                    <input type="text" name="idCardNumber" required maxLength={13} value={formData.idCardNumber} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="X-XXXX-XXXXX-XX-X" onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')} onInput={(e) => (e.target as any).setCustomValidity('')} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">รูปถ่ายหน้าบัตรประชาชน <span className="text-red-500">*</span></label>
                                     <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center bg-white hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden">
-                                        <input type="file" accept="image/*" required onChange={(e) => handleFileChange(e, 'id')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                        <input type="file" accept="image/*" required onChange={(e) => handleFileChange(e, 'id')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onInvalid={(e) => (e.target as any).setCustomValidity('โปรดอัปโหลดรูปถ่ายหน้าบัตรประชาชน')} onInput={(e) => (e.target as any).setCustomValidity('')} />
                                         {idCardImage ? (
                                             <p className="text-sm font-bold text-emerald-600 line-clamp-1">{idCardImage.name}</p>
                                         ) : (
@@ -227,22 +227,22 @@ export default function AffiliateApplicationPage() {
                             <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">ธนาคาร <span className="text-red-500">*</span></label>
-                                    <input type="text" name="bankName" required value={formData.bankName} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="เช่น กสิกรไทย, ไทยพาณิชย์" />
+                                    <input type="text" name="bankName" required value={formData.bankName} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="เช่น กสิกรไทย, ไทยพาณิชย์" onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')} onInput={(e) => (e.target as any).setCustomValidity('')} />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-slate-600 mb-1">เลขที่บัญชี <span className="text-red-500">*</span></label>
-                                        <input type="text" name="bankAccountNo" required value={formData.bankAccountNo} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="XXXXXXXXXX" />
+                                        <input type="text" name="bankAccountNo" required value={formData.bankAccountNo} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="XXXXXXXXXX" onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')} onInput={(e) => (e.target as any).setCustomValidity('')} />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-slate-600 mb-1">ชื่อบัญชี <span className="text-red-500">*</span></label>
-                                        <input type="text" name="bankAccountName" required value={formData.bankAccountName} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="ชื่อ-นามสกุล ที่ตรงกับบัตรประชาชน" />
+                                        <input type="text" name="bankAccountName" required value={formData.bankAccountName} onChange={handleInputChange} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-gold outline-none" placeholder="ชื่อ-นามสกุล ที่ตรงกับบัตรประชาชน" onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')} onInput={(e) => (e.target as any).setCustomValidity('')} />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">รูปถ่ายหน้าแรกสมุดบัญชี <span className="text-red-500">*</span></label>
                                     <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center bg-white hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden">
-                                        <input type="file" accept="image/*" required onChange={(e) => handleFileChange(e, 'bank')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                        <input type="file" accept="image/*" required onChange={(e) => handleFileChange(e, 'bank')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onInvalid={(e) => (e.target as any).setCustomValidity('โปรดอัปโหลดรูปถ่ายหน้าแรกสมุดบัญชี')} onInput={(e) => (e.target as any).setCustomValidity('')} />
                                         {bankPassbookImage ? (
                                             <p className="text-sm font-bold text-emerald-600 line-clamp-1">{bankPassbookImage.name}</p>
                                         ) : (

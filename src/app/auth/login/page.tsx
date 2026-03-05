@@ -73,6 +73,8 @@ export default function LoginPage() {
                             placeholder="example@email.com"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                            onInput={(e) => (e.target as any).setCustomValidity('')}
                         />
                     </div>
                     <div className="pb-2">
@@ -83,6 +85,8 @@ export default function LoginPage() {
                             placeholder="••••••••"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                            onInput={(e) => (e.target as any).setCustomValidity('')}
                         />
                     </div>
 

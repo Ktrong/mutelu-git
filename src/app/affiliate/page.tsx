@@ -256,6 +256,8 @@ export default function AffiliateDashboard() {
                                     value={newCodeName}
                                     onChange={(e) => setNewCodeName(e.target.value.toUpperCase())}
                                     className="border border-slate-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none flex-1"
+                                    onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                                    onInput={(e) => (e.target as any).setCustomValidity('')}
                                 />
                                 <button
                                     type="submit"
@@ -379,6 +381,8 @@ export default function AffiliateDashboard() {
                                             value={payoutAmount}
                                             onChange={(e) => setPayoutAmount(e.target.value)}
                                             className="w-full border border-slate-200 rounded-xl py-3 pl-8 pr-4 text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้ (ขั้นต่ำ 100 บาท)')}
+                                            onInput={(e) => (e.target as any).setCustomValidity('')}
                                         />
                                     </div>
                                 </div>

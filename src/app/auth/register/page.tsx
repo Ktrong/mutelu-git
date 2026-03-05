@@ -70,6 +70,8 @@ export default function RegisterPage() {
                             placeholder="กรุณากรอกชื่อของคุณ"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                            onInput={(e) => (e.target as any).setCustomValidity('')}
                         />
                     </div>
                     <div>
@@ -80,6 +82,8 @@ export default function RegisterPage() {
                             placeholder="example@email.com"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                            onInput={(e) => (e.target as any).setCustomValidity('')}
                         />
                     </div>
                     <div>
@@ -90,6 +94,8 @@ export default function RegisterPage() {
                             placeholder="••••••••"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                            onInput={(e) => (e.target as any).setCustomValidity('')}
                         />
                     </div>
 

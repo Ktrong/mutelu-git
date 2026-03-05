@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronDown, Check, CreditCard, QrCode, X, Download } from 'lucide-react';
+import { ChevronDown, Check, CreditCard, QrCode, X, Plus, Minus, Info, Coins } from 'lucide-react';
 import PhoneMockup from './iPhoneMockup';
+import { useRouter } from 'next/navigation';
+import generatePayload from 'promptpay-qr';
+import { QRCodeSVG } from 'qrcode.react';
 
 declare const Omise: any;
 
@@ -40,9 +43,55 @@ export default function CustomOrderForm() {
     const [paymentMethod, setPaymentMethod] = useState<'promptpay' | 'card'>('promptpay');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState('');
-    const [qrCodeUrl, setQrCodeUrl] = useState('');
+    const [qrCodePayload, setQrCodePayload] = useState<string | null>(null);
+    const [paymentChannels, setPaymentChannels] = useState<any[]>([]);
     const [showPreview, setShowPreview] = useState(false);
     const [maxDays, setMaxDays] = useState(31);
+
+    const handleDownloadQR = () => {
+        const svg = document.getElementById('promptpay-qr-svg');
+        if (!svg) return;
+
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext(" অনন্ত"); // intentionally incorrect string to trigger error? Wait, no, it should be "2d"
+        const ctx2d = canvas.getContext("2d");
+
+        // Ensure proper sizing
+        const size = 300;
+        canvas.width = size;
+        canvas.height = size;
+
+        const img = new Image();
+        img.onload = () => {
+            // Fill background
+            if (ctx2d) {
+                ctx2d.fillStyle = 'white';
+                ctx2d.fillRect(0, 0, size, size);
+
+                // Draw image with padding
+                const padding = 20;
+                ctx2d.drawImage(img, padding, padding, size - padding * 2, size - padding * 2);
+
+                const pngFile = canvas.toDataURL("image/png");
+                const downloadLink = document.createElement("a");
+                downloadLink.download = `PromptPay_QR_${Date.now()}.png`;
+                downloadLink.href = `${pngFile}`;
+                downloadLink.click();
+            }
+        };
+        img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    };
+
+    useEffect(() => {
+        // Fetch active payment channels
+        fetch('/api/payment-channels')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setPaymentChannels(data);
+            })
+            .catch(err => console.error("Error fetching payment channels:", err));
+    }, []);
 
     // Calculate Max Days
     useEffect(() => {
@@ -188,7 +237,7 @@ export default function CustomOrderForm() {
 
         setIsSubmitting(true);
         setMessage('');
-        setQrCodeUrl('');
+        setQrCodePayload(null); // Reset QR code
 
         try {
             // 1. Create the order
@@ -243,8 +292,20 @@ export default function CustomOrderForm() {
             */
 
             // Simulation of success for debugging
-            setMessage('สั่งซื้อสำเร็จ! ดูตัวอย่างวอลเปเปอร์ของคุณด้านล่าง');
-            setShowPreview(true);
+            const orderAmount = totalAmount; // Use totalAmount for QR code generation
+            if (paymentMethod === 'promptpay' && paymentChannels.length > 0) {
+                // Use the first active channel
+                const activeChannel = paymentChannels[0];
+                const payload = generatePayload(activeChannel.promptPayNo, { amount: orderAmount });
+                setQrCodePayload(payload);
+                setMessage('กรุณาสแกน QR Code ด้านบนเพื่อชำระเงิน');
+            } else if (paymentMethod === 'promptpay') {
+                // Fallback if no channel found
+                setMessage('ไม่พบช่องทางรับเงิน (PromptPay) ที่เปิดใช้งาน กรุณาติดต่อแอดมิน');
+            } else {
+                setMessage('สั่งซื้อสำเร็จ! ดูตัวอย่างวอลเปเปอร์ของคุณด้านล่าง');
+                setShowPreview(true);
+            }
         } catch (error: any) {
             setMessage(error.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
         }
@@ -386,6 +447,8 @@ export default function CustomOrderForm() {
                             className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
                             value={formData.displayedName}
                             onChange={(e) => setFormData({ ...formData, displayedName: e.target.value })}
+                            onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกข้อมูลในช่องนี้')}
+                            onInput={(e) => (e.target as any).setCustomValidity('')}
                         />
                     </div>
 
@@ -396,6 +459,8 @@ export default function CustomOrderForm() {
                                 <select required
                                     className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none appearance-none cursor-pointer"
                                     value={bDay} onChange={(e) => setBDay(e.target.value)}
+                                    onInvalid={(e) => (e.target as any).setCustomValidity('โปรดเลือกวันเกิด')}
+                                    onInput={(e) => (e.target as any).setCustomValidity('')}
                                 >
                                     <option value="" disabled>วัน</option>
                                     {[...Array(maxDays)].map((_, i) => (
@@ -408,6 +473,8 @@ export default function CustomOrderForm() {
                                 <select required
                                     className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none appearance-none cursor-pointer"
                                     value={bMonth} onChange={(e) => setBMonth(e.target.value)}
+                                    onInvalid={(e) => (e.target as any).setCustomValidity('โปรดเลือกเดือนเกิด')}
+                                    onInput={(e) => (e.target as any).setCustomValidity('')}
                                 >
                                     <option value="" disabled>เดือน</option>
                                     {[
@@ -425,6 +492,8 @@ export default function CustomOrderForm() {
                                 <select required
                                     className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none appearance-none cursor-pointer"
                                     value={bYear} onChange={(e) => setBYear(e.target.value)}
+                                    onInvalid={(e) => (e.target as any).setCustomValidity('โปรดเลือกปีเกิด')}
+                                    onInput={(e) => (e.target as any).setCustomValidity('')}
                                 >
                                     <option value="" disabled>ปี พ.ศ.</option>
                                     {[...Array(100)].map((_, i) => {
@@ -471,12 +540,18 @@ export default function CustomOrderForm() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold mb-1 ml-1">เบอร์โทรศัพท์ (สำหรับรับ SMS ดาวน์โหลดวอล์เปเปอร์)</label>
+                        <label className="block text-xs font-bold mb-1 ml-1">
+                            เบอร์โทรศัพท์ (สำหรับรับ SMS ดาวน์โหลดวอล์เปเปอร์)
+                            <span className="text-red-500 ml-1">*</span>
+                        </label>
                         <input
                             type="tel"
+                            required
                             className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('โปรดกรอกข้อมูลเบอร์โทรศัพท์ในช่องนี้ให้ครบถ้วน')}
+                            onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                         />
                     </div>
 
@@ -510,20 +585,23 @@ export default function CustomOrderForm() {
 
                     <div className="pt-2">
                         <label className="block text-xs font-bold mb-2 ml-1">ช่องทางการชำระเงิน</label>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="w-full">
                             <div
                                 onClick={() => setPaymentMethod('promptpay')}
-                                className={`flex flex-col items-center gap-2 p-3 rounded-2xl cursor-pointer transition-all border-2 ${paymentMethod === 'promptpay' ? 'bg-[#E0F7F1] border-[#FFA048]' : 'bg-white border-transparent'}`}
+                                className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all border-2 ${paymentMethod === 'promptpay' ? 'bg-[#E0F7F1] border-[#FFA048]' : 'bg-white border-slate-200 hover:border-[#FFA048]/50'}`}
                             >
-                                <QrCode className={`w-6 h-6 ${paymentMethod === 'promptpay' ? 'text-[#FFA048]' : 'text-slate-400'}`} />
-                                <span className="text-[10px] font-bold">PROMPTPAY</span>
-                            </div>
-                            <div
-                                onClick={() => setPaymentMethod('card')}
-                                className={`flex flex-col items-center gap-2 p-3 rounded-2xl cursor-pointer transition-all border-2 ${paymentMethod === 'card' ? 'bg-[#E0F7F1] border-[#FFA048]' : 'bg-white border-transparent'}`}
-                            >
-                                <CreditCard className={`w-6 h-6 ${paymentMethod === 'card' ? 'text-[#FFA048]' : 'text-slate-400'}`} />
-                                <span className="text-[10px] font-bold">CREDIT CARD</span>
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-xl transition-colors ${paymentMethod === 'promptpay' ? 'bg-white text-[#FFA048]' : 'bg-slate-50 text-slate-400'}`}>
+                                        <QrCode className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <span className="block text-sm font-bold text-slate-800">โอนเงินผ่าน พร้อมเพย์ (PromptPay)</span>
+                                        <span className="block text-xs text-slate-500 mt-0.5">สแกน QR Code ผ่านแอปธนาคาร</span>
+                                    </div>
+                                </div>
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'promptpay' ? 'border-[#FFA048] bg-[#FFA048]' : 'border-slate-300'}`}>
+                                    {paymentMethod === 'promptpay' && <Check className="w-3 h-3 text-white" />}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -531,10 +609,26 @@ export default function CustomOrderForm() {
 
                 {/* Total and Submit */}
                 <div className="pt-4 space-y-4">
-                    {qrCodeUrl && (
-                        <div className="bg-white p-4 rounded-3xl shadow-inner flex flex-col items-center gap-2 animate-in fade-in zoom-in duration-300">
-                            <img src={qrCodeUrl} alt="PromptPay QR" className="w-48 h-48" />
-                            <p className="text-[10px] font-bold text-slate-400">สแกนเพื่อชำระเงิน {calculateTotal().toFixed(2)} บาท</p>
+                    {paymentMethod === 'promptpay' && qrCodePayload && (
+                        <div className="bg-white p-6 rounded-3xl shadow-inner flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300 border-2 border-slate-100">
+                            <div className="bg-white p-2 border-4 border-[#FFA048] rounded-2xl shadow-sm">
+                                <QRCodeSVG id="promptpay-qr-svg" value={qrCodePayload} size={200} />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-sm font-bold text-slate-800 mb-1">สแกนชำระผ่านพร้อมเพย์</p>
+                                <p className="text-xl font-bold text-[#FFA048]">{calculateTotal().toFixed(2)} THB</p>
+                                {paymentChannels[0] && (
+                                    <p className="text-xs text-slate-500 mt-2 font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">ชื่อบัญชี: {paymentChannels[0].accountName}</p>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleDownloadQR}
+                                className="w-full flex items-center justify-center gap-2 bg-[#F8FAFC] text-slate-600 hover:bg-[#F1F5F9] border-2 border-slate-200 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 mt-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+                                ดาวน์โหลด QR Code
+                            </button>
                         </div>
                     )}
 
@@ -573,7 +667,7 @@ export default function CustomOrderForm() {
                             disabled={isSubmitting}
                             className="flex-1 bg-[#FFA048]/30 border-2 border-[#FFA048] py-3 rounded-2xl font-bold text-lg active:scale-[0.98] transition-all hover:bg-[#FFA048]/40 disabled:opacity-50"
                         >
-                            {isSubmitting ? 'กำลังดำเนินการ...' : (qrCodeUrl ? 'ตรวจสอบการชำระเงิน' : 'ตกลง')}
+                            {isSubmitting ? 'กำลังดำเนินการ...' : (qrCodePayload ? 'ยืนยันการชำระเงินและสั่งทำ' : 'ตกลง')}
                         </button>
                     </div>
 

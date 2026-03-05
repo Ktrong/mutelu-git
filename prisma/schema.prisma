@@ -324,3 +324,14 @@ model SiteSetting {
 
   @@map("site_setting")
 }
+
+model PaymentChannel {
+  id            String   @id @default(cuid())
+  promptPayNo   String   // Phone or National ID
+  accountName   String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("payment_channel")
+}
