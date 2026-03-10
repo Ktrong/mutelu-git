@@ -556,7 +556,7 @@ export default function AdminDashboard() {
     return (
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full overflow-y-auto">
+            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full overflow-y-auto custom-scrollbar">
                 <div className="p-6">
                     <h2 className="text-2xl font-bold gold-text">Iucrative</h2>
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Admin Console</p>
@@ -637,6 +637,12 @@ export default function AdminDashboard() {
                             }`}
                     >
                         <DollarSign className="w-4 h-4" /> ช่องทางรับเงิน
+                    </button>
+                    <button
+                        onClick={() => router.push('/admin/slipok-settings')}
+                        className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors text-slate-400 hover:bg-white/5"
+                    >
+                        <Settings className="w-4 h-4" /> ตั้งค่า API สลิป (SlipOK)
                     </button>
                 </nav>
 

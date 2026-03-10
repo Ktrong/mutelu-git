@@ -183,7 +183,7 @@ export default function AdminMenusPage() {
     return (
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full overflow-y-auto">
+            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full overflow-y-auto custom-scrollbar">
                 <div className="p-6">
                     <h2 className="text-2xl font-bold gold-text">Iucrative</h2>
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Admin Console</p>

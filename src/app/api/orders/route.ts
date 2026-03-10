@@ -15,8 +15,16 @@ export async function POST(req: Request) {
             phone,
             discountCode,
             totalAmount,
-            affiliateCode
+            affiliateCode,
+            deliveryMethod
         } = body;
+
+        if (deliveryMethod === 'email' && !email) {
+            return NextResponse.json({ error: "โปรดระบุอีเมลของท่าน เพื่อรับลิงก์วอลเปเปอร์" }, { status: 400 });
+        }
+        if (deliveryMethod === 'phone' && !phone) {
+            return NextResponse.json({ error: "โปรดระบุเบอร์โทรศัพท์ของท่าน เพื่อรับลิงก์วอลเปเปอร์ผ่าน SMS" }, { status: 400 });
+        }
 
         const order = await prisma.customOrder.create({
             data: {

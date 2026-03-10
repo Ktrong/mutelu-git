@@ -8,30 +8,30 @@ datasource db {
 }
 
 model User {
-  id         String     @id @default(cuid())
-  email      String     @unique(map: "User_email_key")
-  name       String?
-  image      String?
-  birthDate  DateTime?
-  birthTime  String?
-  dayOfWeek  String?
-  zodiacSign String?
-  credits    Int        @default(0)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  password   String?
-  phone      String?
-  address    String?    @db.Text
-  isAdmin             Boolean                 @default(false)
-  referrerId          String?
-  commissionBalance   Float                   @default(0)
-  downloads           Download[]
-  orders              Order[]
-  referrer            User?                   @relation("AffiliateNetwork", fields: [referrerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  referrals           User[]                  @relation("AffiliateNetwork")
-  affiliateCodes      AffiliateCode[]
-  commissionsReceived CommissionTransaction[] @relation("Receiver")
-  payoutRequests      PayoutRequest[]
+  id                   String                  @id @default(cuid())
+  email                String                  @unique(map: "User_email_key")
+  name                 String?
+  image                String?
+  birthDate            DateTime?
+  birthTime            String?
+  dayOfWeek            String?
+  zodiacSign           String?
+  credits              Int                     @default(0)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  password             String?
+  phone                String?
+  address              String?                 @db.Text
+  isAdmin              Boolean                 @default(false)
+  referrerId           String?
+  commissionBalance    Float                   @default(0)
+  downloads            Download[]
+  orders               Order[]
+  referrer             User?                   @relation("AffiliateNetwork", fields: [referrerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  referrals            User[]                  @relation("AffiliateNetwork")
+  affiliateCodes       AffiliateCode[]
+  commissionsReceived  CommissionTransaction[] @relation("Receiver")
+  payoutRequests       PayoutRequest[]
   affiliateApplication AffiliateApplication?
 
   @@index([referrerId], map: "User_referrerId_fkey")
@@ -53,7 +53,7 @@ model Wallpaper {
   isPopular          Boolean            @default(false)
   isOffering         Boolean            @default(false)
   relatedWallpaperId String?
-  downloadUrl        String?            // High-quality file for customers to download
+  downloadUrl        String? // High-quality file for customers to download
   customOrders       CustomOrder[]
   downloads          Download[]
   slideshows         Slideshow[]
@@ -102,16 +102,17 @@ model Category {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  userId      String
-  amount      Float
-  credits     Int
-  status      OrderStatus @default(PENDING)
-  paymentType String
-  paymentRef    String?     @unique(map: "Order_paymentRef_key")
-  affiliateCode String?
-  createdAt     DateTime    @default(now())
-  user          User        @relation(fields: [userId], references: [id])
+  id             String      @id @default(cuid())
+  userId         String
+  amount         Float
+  credits        Int
+  status         OrderStatus @default(PENDING)
+  paymentType    String
+  paymentRef     String?     @unique(map: "Order_paymentRef_key")
+  slipokTransRef String?     @unique(map: "Order_slipokTransRef_key")
+  affiliateCode  String?
+  createdAt      DateTime    @default(now())
+  user           User        @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "Order_userId_fkey")
   @@map("order")
@@ -162,24 +163,25 @@ model Slideshow {
 }
 
 model CustomOrder {
-  id            String      @id @default(cuid())
-  wallpaperId   String
-  displayedName String
-  birthDate     String
-  dayOfWeek     String
-  zodiac        String
-  email         String?
-  phone         String?
-  discountCode  String?
-  totalAmount   Float
-  status        OrderStatus @default(PENDING)
-  paymentId     String?     @unique(map: "CustomOrder_paymentId_key")
-  paymentMethod String?
-  paymentStatus String      @default("UNPAID")
-  affiliateCode String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  wallpaper     Wallpaper   @relation(fields: [wallpaperId], references: [id])
+  id             String      @id @default(cuid())
+  wallpaperId    String
+  displayedName  String
+  birthDate      String
+  dayOfWeek      String
+  zodiac         String
+  email          String?
+  phone          String?
+  discountCode   String?
+  totalAmount    Float
+  status         OrderStatus @default(PENDING)
+  paymentId      String?     @unique(map: "CustomOrder_paymentId_key")
+  paymentMethod  String?
+  paymentStatus  String      @default("UNPAID")
+  slipokTransRef String?     @unique(map: "CustomOrder_slipokTransRef_key")
+  affiliateCode  String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  wallpaper      Wallpaper   @relation(fields: [wallpaperId], references: [id])
 
   @@index([wallpaperId], map: "CustomOrder_wallpaperId_fkey")
   @@map("customorder")
@@ -239,7 +241,7 @@ model CommissionTransaction {
   level             Int
   createdAt         DateTime @default(now())
 
-  user              User     @relation("Receiver", fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation("Receiver", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "CommissionTransaction_userId_fkey")
   @@index([fromOrderId], map: "CommissionTransaction_fromOrderId_index")
@@ -267,22 +269,22 @@ enum PayoutStatus {
 }
 
 model AffiliateApplication {
-  id               String            @id @default(cuid())
-  userId           String            @unique
-  phoneNumber      String
-  socialLinks      String            @db.Text
-  address          String            @db.Text
-  idCardNumber     String
-  idCardImageUrl   String
-  bankName         String
-  bankAccountNo    String
-  bankAccountName  String
+  id                   String            @id @default(cuid())
+  userId               String            @unique
+  phoneNumber          String
+  socialLinks          String            @db.Text
+  address              String            @db.Text
+  idCardNumber         String
+  idCardImageUrl       String
+  bankName             String
+  bankAccountNo        String
+  bankAccountName      String
   bankPassbookImageUrl String
-  status           ApplicationStatus @default(PENDING)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status               ApplicationStatus @default(PENDING)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "AffiliateApplication_userId_fkey")
   @@map("affiliate_application")
@@ -326,12 +328,12 @@ model SiteSetting {
 }
 
 model PaymentChannel {
-  id            String   @id @default(cuid())
-  promptPayNo   String   // Phone or National ID
-  accountName   String
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  promptPayNo String // Phone or National ID
+  accountName String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("payment_channel")
 }

@@ -41,12 +41,16 @@ export default function CustomOrderForm() {
     const [bMonth, setBMonth] = useState('');
     const [bYear, setBYear] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'promptpay' | 'card'>('promptpay');
+    const [deliveryMethod, setDeliveryMethod] = useState<'phone' | 'email'>('phone');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState('');
     const [qrCodePayload, setQrCodePayload] = useState<string | null>(null);
     const [paymentChannels, setPaymentChannels] = useState<any[]>([]);
     const [showPreview, setShowPreview] = useState(false);
     const [maxDays, setMaxDays] = useState(31);
+    const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+    const [slipFile, setSlipFile] = useState<File | null>(null);
+    const [isUploadingSlip, setIsUploadingSlip] = useState(false);
 
     const handleDownloadQR = () => {
         const svg = document.getElementById('promptpay-qr-svg');
@@ -81,6 +85,44 @@ export default function CustomOrderForm() {
             }
         };
         img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    };
+
+    const handleSlipUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSlipFile(e.target.files[0]);
+        }
+    };
+
+    const submitSlip = async () => {
+        if (!slipFile || !createdOrderId) return;
+        setIsUploadingSlip(true);
+        setMessage('กำลังตรวจสอบสลิปกับระบบ SlipOK โปรดรอสักครู่...');
+        try {
+            const fd = new FormData();
+            fd.append('files', slipFile);
+            fd.append('expectedAmount', calculateTotal().toString());
+            fd.append('orderId', createdOrderId);
+            fd.append('orderType', 'CustomOrder');
+
+            const res = await fetch('/api/slipok/verify', {
+                method: 'POST',
+                body: fd,
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setMessage('ชำระเงินและตรวจสอบสลิปสำเร็จ! ดูตัวอย่างวอลเปเปอร์ของคุณด้านล่าง');
+                setShowPreview(true);
+            } else {
+                setMessage(data.error || 'ตรวจสอบสลิปไม่ผ่าน');
+                // Could reset slipFile here if we want them to re-upload, but maybe better to let them try submitting again if desired
+                if (!data.retry) {
+                    setSlipFile(null); // Force upload new one if duplicate 
+                }
+            }
+        } catch (err: any) {
+            setMessage('ระบบขัดข้อง: ' + err.message);
+        }
+        setIsUploadingSlip(false);
     };
 
     useEffect(() => {
@@ -249,12 +291,15 @@ export default function CustomOrderForm() {
                     ...formData,
                     wallpaperId: selectedWp.id,
                     totalAmount: totalAmount,
-                    affiliateCode: formData.discountCode
+                    affiliateCode: formData.discountCode,
+                    deliveryMethod: deliveryMethod
                 })
             });
 
             const order = await orderRes.json();
             if (!orderRes.ok) throw new Error(order.error || 'Failed to create order');
+
+            setCreatedOrderId(order.id);
 
             // 2. Process Payment (Bypassed for debugging/demo)
             /*
@@ -298,7 +343,7 @@ export default function CustomOrderForm() {
                 const activeChannel = paymentChannels[0];
                 const payload = generatePayload(activeChannel.promptPayNo, { amount: orderAmount });
                 setQrCodePayload(payload);
-                setMessage('กรุณาสแกน QR Code ด้านบนเพื่อชำระเงิน');
+                setMessage('กรุณาสแกน QR Code เพื่อชำระเงิน และอัปโหลดสลิปที่ด้านล่าง');
             } else if (paymentMethod === 'promptpay') {
                 // Fallback if no channel found
                 setMessage('ไม่พบช่องทางรับเงิน (PromptPay) ที่เปิดใช้งาน กรุณาติดต่อแอดมิน');
@@ -540,29 +585,73 @@ export default function CustomOrderForm() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold mb-1 ml-1">
-                            เบอร์โทรศัพท์ (สำหรับรับ SMS ดาวน์โหลดวอล์เปเปอร์)
+                        <label className="block text-xs font-bold mb-3 ml-1">
+                            ช่องทางการรับลิงก์วอลเปเปอร์
                             <span className="text-red-500 ml-1">*</span>
                         </label>
-                        <input
-                            type="tel"
-                            required
-                            className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('โปรดกรอกข้อมูลเบอร์โทรศัพท์ในช่องนี้ให้ครบถ้วน')}
-                            onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
-                        />
-                    </div>
+                        <div className="flex gap-4 mb-4">
+                            <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${deliveryMethod === 'phone' ? 'border-[#FFA048] bg-[#FFF5EC] text-[#FF8A1E]' : 'border-gray-200 bg-white text-gray-400'
+                                }`}>
+                                <input
+                                    type="radio"
+                                    name="deliveryMethod"
+                                    value="phone"
+                                    checked={deliveryMethod === 'phone'}
+                                    onChange={() => setDeliveryMethod('phone')}
+                                    className="hidden"
+                                />
+                                <span className="text-sm font-bold">เบอร์โทรศัพท์ (SMS)</span>
+                            </label>
 
-                    <div>
-                        <label className="block text-xs font-bold mb-1 ml-1">อีเมล</label>
-                        <input
-                            type="email"
-                            className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
+                            <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${deliveryMethod === 'email' ? 'border-[#FFA048] bg-[#FFF5EC] text-[#FF8A1E]' : 'border-gray-200 bg-white text-gray-400'
+                                }`}>
+                                <input
+                                    type="radio"
+                                    name="deliveryMethod"
+                                    value="email"
+                                    checked={deliveryMethod === 'email'}
+                                    onChange={() => setDeliveryMethod('email')}
+                                    className="hidden"
+                                />
+                                <span className="text-sm font-bold">อีเมล</span>
+                            </label>
+                        </div>
+
+                        {deliveryMethod === 'phone' && (
+                            <div className="animate-fade-in">
+                                <label className="block text-xs font-bold mb-1 ml-1">
+                                    เบอร์โทรศัพท์
+                                    <span className="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    type="tel"
+                                    required
+                                    className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('โปรดกรอกเบอร์โทรศัพท์ให้ครบถ้วน')}
+                                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                                />
+                            </div>
+                        )}
+
+                        {deliveryMethod === 'email' && (
+                            <div className="animate-fade-in">
+                                <label className="block text-xs font-bold mb-1 ml-1">
+                                    อีเมล
+                                    <span className="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="w-full bg-[#FEFEED] rounded-xl p-3 text-sm border-none shadow-inner outline-none focus:ring-1 ring-[#FFDAB9]/50"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('โปรดกรอกอีเมลให้ถูกต้อง')}
+                                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -629,6 +718,27 @@ export default function CustomOrderForm() {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
                                 ดาวน์โหลด QR Code
                             </button>
+
+                            {/* Slip Upload UI */}
+                            <div className="w-full mt-4 pt-4 border-t-2 border-slate-100 flex flex-col items-center gap-3">
+                                <label className="text-sm font-bold text-slate-800 self-start">อัปโหลดสลิปยืนยันการชำระเงิน</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleSlipUpload}
+                                    className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#FFA048]/10 file:text-[#FFA048] hover:file:bg-[#FFA048]/20 transition-all cursor-pointer bg-slate-50 border border-slate-200 rounded-xl"
+                                />
+                                {slipFile && (
+                                    <button
+                                        type="button"
+                                        onClick={submitSlip}
+                                        disabled={isUploadingSlip}
+                                        className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                                    >
+                                        {isUploadingSlip ? 'กำลังตรวจสอบ...' : 'ยืนยันการโอนเงิน'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
 
