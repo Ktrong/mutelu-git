@@ -48,6 +48,10 @@ export async function POST(req: Request) {
                 user: config.user,
                 pass: config.password,
             },
+            tls: {
+                // do not fail on invalid certs
+                rejectUnauthorized: false
+            }
         });
 
         const mailOptions = {
