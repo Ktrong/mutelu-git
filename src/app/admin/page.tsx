@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent, Menu, Search } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent, Menu, Search, Mail } from 'lucide-react';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -32,6 +32,9 @@ export default function AdminDashboard() {
     const [faqs, setFaqs] = useState<any[]>([]);
     const [showFaqModal, setShowFaqModal] = useState(false);
     const [editingFaq, setEditingFaq] = useState<any>(null);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [emailingOrder, setEmailingOrder] = useState<any>(null);
+    const [downloadLink, setDownloadLink] = useState('');
     const [isAuthenticating, setIsAuthenticating] = useState(true);
 
     const [commissionRates, setCommissionRates] = useState<any[]>([{ level: 1, percentage: 10 }, { level: 2, percentage: 5 }, { level: 3, percentage: 2 }]);
@@ -551,6 +554,32 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleSendEmail = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!emailingOrder || !downloadLink) return;
+
+        try {
+            const res = await fetch('/api/admin/send-wallpaper', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: emailingOrder.id, downloadUrl: downloadLink })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert('ส่งอีเมลสำเร็จ!');
+                setShowEmailModal(false);
+                setEmailingOrder(null);
+                setDownloadLink('');
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + data.error);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('เกิดข้อผิดพลาดในการส่งอีเมล');
+        }
+    };
+
     if (isAuthenticating) return null;
 
     return (
@@ -644,6 +673,12 @@ export default function AdminDashboard() {
                     >
                         <Settings className="w-4 h-4" /> ตั้งค่า API สลิป (SlipOK)
                     </button>
+                    <button
+                        onClick={() => router.push('/admin/email-settings')}
+                        className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors text-slate-400 hover:bg-white/5"
+                    >
+                        <Mail className="w-4 h-4" /> ตั้งค่าอีเมล (Email)
+                    </button>
                 </nav>
 
                 <div className="p-6 border-t border-white/5 shrink-0">
@@ -725,22 +760,35 @@ export default function AdminDashboard() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <select
-                                                    className={`px-2 py-1 rounded-full text-[10px] font-bold border-none outline-none cursor-pointer ${order.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
-                                                    value={order.status}
-                                                    onChange={async (e) => {
-                                                        await fetch(`/api/orders/${order.id}`, {
-                                                            method: 'PUT',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({ status: e.target.value })
-                                                        });
-                                                        fetchData();
-                                                    }}
-                                                >
-                                                    <option value="PENDING">รอดำเนินการ</option>
-                                                    <option value="SUCCESS">สำเร็จ</option>
-                                                    <option value="FAILED">ไม่สำเร็จ</option>
-                                                </select>
+                                                <div className="flex flex-col gap-2 items-center">
+                                                    <select
+                                                        className={`px-2 py-1 rounded-full text-[10px] font-bold border-none outline-none cursor-pointer ${order.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
+                                                        value={order.status}
+                                                        onChange={async (e) => {
+                                                            await fetch(`/api/orders/${order.id}`, {
+                                                                method: 'PUT',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ status: e.target.value })
+                                                            });
+                                                            fetchData();
+                                                        }}
+                                                    >
+                                                        <option value="PENDING">รอดำเนินการ</option>
+                                                        <option value="SUCCESS">สำเร็จ</option>
+                                                        <option value="FAILED">ไม่สำเร็จ</option>
+                                                    </select>
+                                                    {order.email && order.status === 'SUCCESS' && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setEmailingOrder(order);
+                                                                setShowEmailModal(true);
+                                                            }}
+                                                            className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors flex items-center gap-1"
+                                                        >
+                                                            <Mail className="w-3 h-3" /> ส่งลิงก์อีเมล
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
@@ -2800,6 +2848,66 @@ export default function AdminDashboard() {
                     </div>
                 )
             }
+
+            {showEmailModal && emailingOrder && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+                    <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-slide-up">
+                        <div className="flex justify-between items-center p-6 border-b border-slate-100">
+                            <h3 className="text-xl font-bold text-slate-800 font-asar tracking-wide">
+                                ส่งวอลเปเปอร์ทางอีเมล
+                            </h3>
+                            <button
+                                onClick={() => { setShowEmailModal(false); setEmailingOrder(null); setDownloadLink(''); }}
+                                className="text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 p-2 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSendEmail} className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">ส่งถึงลูกค้า (อีเมล)</label>
+                                <input
+                                    type="email"
+                                    className="w-full p-4 rounded-2xl bg-slate-100 border-none outline-none text-sm text-slate-500 font-medium"
+                                    value={emailingOrder.email || ''}
+                                    readOnly
+                                    disabled
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">ลิงก์ดาวน์โหลดวอลเปเปอร์</label>
+                                <input
+                                    type="url" required
+                                    className="w-full p-4 rounded-2xl bg-slate-50 border-none ring-1 ring-slate-200 outline-none text-sm focus:ring-slate-900 transition-all font-medium"
+                                    placeholder="https://example.com/download/wallpaper"
+                                    value={downloadLink}
+                                    onChange={(e) => setDownloadLink(e.target.value)}
+                                    onInvalid={(e) => (e.target as any).setCustomValidity('โปรดกรอกลิงก์ดาวน์โหลด')}
+                                    onInput={(e) => (e.target as any).setCustomValidity('')}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowEmailModal(false); setEmailingOrder(null); setDownloadLink(''); }}
+                                    className="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-2xl hover:bg-slate-200 transition-colors"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+                                >
+                                    <Mail className="w-4 h-4" /> ส่งอีเมล
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }

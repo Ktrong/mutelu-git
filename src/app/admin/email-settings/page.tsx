@@ -4,10 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Monitor, Menu, DollarSign, Percent, Mail } from "lucide-react";
 
-export default function SlipOKSettingsPage() {
+export default function EmailSettingsPage() {
     const router = useRouter();
-    const [apiKey, setApiKey] = useState('');
-    const [branchId, setBranchId] = useState('');
+    const [config, setConfig] = useState({
+        host: '',
+        port: 587,
+        user: '',
+        password: '',
+        fromName: '',
+        fromEmail: ''
+    });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
@@ -18,14 +24,20 @@ export default function SlipOKSettingsPage() {
 
     const fetchSettings = async () => {
         try {
-            const res = await fetch('/api/admin/slipok-settings');
+            const res = await fetch('/api/admin/email-settings');
             if (res.ok) {
                 const data = await res.json();
-                setApiKey(data.apiKey || '');
-                setBranchId(data.branchId || '');
+                setConfig({
+                    host: data.host || '',
+                    port: data.port || 587,
+                    user: data.user || '',
+                    password: data.password || '',
+                    fromName: data.fromName || '',
+                    fromEmail: data.fromEmail || ''
+                });
             }
         } catch (error) {
-            console.error('Failed to fetch SlipOK settings:', error);
+            console.error('Failed to fetch Email settings:', error);
         } finally {
             setLoading(false);
         }
@@ -37,12 +49,12 @@ export default function SlipOKSettingsPage() {
         setMessage('');
 
         try {
-            const res = await fetch('/api/admin/slipok-settings', {
+            const res = await fetch('/api/admin/email-settings', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ apiKey, branchId }),
+                body: JSON.stringify(config),
             });
 
             if (res.ok) {
@@ -51,7 +63,7 @@ export default function SlipOKSettingsPage() {
                 setMessage('Failed to save settings.');
             }
         } catch (error) {
-            console.error('Failed to save SlipOK settings:', error);
+            console.error('Failed to save Email settings:', error);
             setMessage('An error occurred while saving.');
         } finally {
             setSaving(false);
@@ -108,10 +120,10 @@ export default function SlipOKSettingsPage() {
                     <button onClick={() => router.push('/admin#payment-channels')} className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors text-slate-400 hover:bg-white/5">
                         <DollarSign className="w-4 h-4" /> ช่องทางรับเงิน
                     </button>
-                    <button onClick={() => router.push('/admin/slipok-settings')} className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors bg-white/10 text-white">
+                    <button onClick={() => router.push('/admin/slipok-settings')} className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors text-slate-400 hover:bg-white/5">
                         <Settings className="w-4 h-4" /> ตั้งค่า API สลิป (SlipOK)
                     </button>
-                    <button onClick={() => router.push('/admin/email-settings')} className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors text-slate-400 hover:bg-white/5">
+                    <button onClick={() => router.push('/admin/email-settings')} className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors bg-white/10 text-white">
                         <Mail className="w-4 h-4" /> ตั้งค่าอีเมล (Email)
                     </button>
                 </nav>
@@ -132,11 +144,11 @@ export default function SlipOKSettingsPage() {
             {/* Main Content */}
             <main className="flex-1 ml-64 p-8 overflow-y-auto">
                 <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-                    <h1 className="text-3xl font-bold mb-6 text-gray-800">SlipOK Settings</h1>
+                    <h1 className="text-3xl font-bold mb-6 text-gray-800">Email (SMTP) Settings</h1>
 
                     <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
                         <p className="text-gray-600 mb-6 font-light">
-                            Configure your SlipOK API credentials to enable automated payment slip verification.
+                            ตั้งค่า SMTP สำหรับส่งอีเมลแนบลิงก์ดาวน์โหลดวอลเปเปอร์ให้กับลูกค้า
                         </p>
 
                         {message && (
@@ -146,34 +158,85 @@ export default function SlipOKSettingsPage() {
                         )}
 
                         <form onSubmit={handleSave} className="space-y-6">
-                            <div>
-                                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-2">
-                                    API Key
-                                </label>
-                                <input
-                                    type="text"
-                                    id="apiKey"
-                                    value={apiKey}
-                                    onChange={(e) => setApiKey(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D9C4A1] focus:border-transparent transition-colors"
-                                    placeholder="e.g. YOUR_SLIPOK_API_KEY"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="branchId" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Branch ID
-                                </label>
-                                <input
-                                    type="text"
-                                    id="branchId"
-                                    value={branchId}
-                                    onChange={(e) => setBranchId(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D9C4A1] focus:border-transparent transition-colors"
-                                    placeholder="e.g. YOUR_SLIPOK_BRANCH_ID"
-                                    required
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        SMTP Host
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={config.host}
+                                        onChange={(e) => setConfig({ ...config, host: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D9C4A1] focus:border-transparent transition-colors"
+                                        placeholder="smtp.example.com"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        SMTP Port
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={config.port}
+                                        onChange={(e) => setConfig({ ...config, port: parseInt(e.target.value) || 587 })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D9C4A1] focus:border-transparent transition-colors"
+                                        placeholder="587"
+                                        required
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        SMTP Username (Email)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={config.user}
+                                        onChange={(e) => setConfig({ ...config, user: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D9C4A1] focus:border-transparent transition-colors"
+                                        placeholder="your-email@example.com"
+                                        required
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        SMTP Password (App Password)
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={config.password}
+                                        onChange={(e) => setConfig({ ...config, password: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D9C4A1] focus:border-transparent transition-colors"
+                                        placeholder="********"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        From Name (ชื่อผู้ส่ง)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={config.fromName}
+                                        onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D9C4A1] focus:border-transparent transition-colors"
+                                        placeholder="Iucrative"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        From Email (อีเมลผู้ส่ง)
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={config.fromEmail}
+                                        onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D9C4A1] focus:border-transparent transition-colors"
+                                        placeholder="noreply@iucrative.com"
+                                        required
+                                    />
+                                </div>
                             </div>
 
                             <button

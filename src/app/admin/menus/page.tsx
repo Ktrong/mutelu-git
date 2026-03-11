@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import useSWR from "swr";
 import { Plus, Trash2, Edit2, GripVertical, Save, AlignLeft, AlignCenter, AlignRight, CheckCircle2, X } from "lucide-react";
-import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Monitor, Menu, DollarSign, Percent } from "lucide-react";
+import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Monitor, Menu, DollarSign, Percent, Mail } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -228,6 +228,9 @@ export default function AdminMenusPage() {
                     </button>
                     <button onClick={() => router.push('/admin/slipok-settings')} className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors text-slate-400 hover:bg-white/5">
                         <Settings className="w-4 h-4" /> ตั้งค่า API สลิป (SlipOK)
+                    </button>
+                    <button onClick={() => router.push('/admin/email-settings')} className="w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors text-slate-400 hover:bg-white/5">
+                        <Mail className="w-4 h-4" /> ตั้งค่าอีเมล (Email)
                     </button>
                 </nav>
 
