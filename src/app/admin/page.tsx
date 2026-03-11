@@ -556,13 +556,13 @@ export default function AdminDashboard() {
     return (
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full overflow-y-auto custom-scrollbar">
-                <div className="p-6">
+            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-screen">
+                <div className="p-6 shrink-0">
                     <h2 className="text-2xl font-bold gold-text">Iucrative</h2>
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Admin Console</p>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-1">
+                <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar pb-4">
                     <button
                         onClick={() => setActiveTab('dashboard')}
                         className={`w-full p-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-colors ${activeTab === 'dashboard' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5'}`}
@@ -646,7 +646,7 @@ export default function AdminDashboard() {
                     </button>
                 </nav>
 
-                <div className="p-6 border-t border-white/5">
+                <div className="p-6 border-t border-white/5 shrink-0">
                     <button
                         onClick={() => {
                             localStorage.removeItem('adminUser');
