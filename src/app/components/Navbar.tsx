@@ -6,6 +6,7 @@ import { Menu, X, User, ShoppingBag, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 import useSWR from "swr";
 import { useTheme } from "@/context/ThemeContext";
+import { getImageUrl } from "@/lib/utils";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -110,7 +111,7 @@ const Navbar = () => {
                         {/* Logo */}
                         <Link href={isAdminRoute ? "/admin" : "/"} className="flex-shrink-0 flex items-center gap-2 group mx-auto md:mx-0">
                             {theme.logoUrl ? (
-                                <img src={theme.logoUrl} alt="Logo" className="h-10 md:h-16 object-contain transition-transform duration-300 group-hover:scale-105" />
+                                <img src={getImageUrl(theme.logoUrl)} alt="Logo" className="h-10 md:h-16 object-contain transition-transform duration-300 group-hover:scale-105" />
                             ) : (
                                 <span className="font-sarabun font-extrabold text-xl md:text-3xl text-gold-dark tracking-widest drop-shadow-sm transition-transform duration-300 group-hover:scale-105">
                                     MUTELU<span className="text-gold">WALLPAPER</span>

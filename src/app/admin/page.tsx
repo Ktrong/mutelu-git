@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent, Menu, Search, Mail } from 'lucide-react';
+import { getImageUrl } from "@/lib/utils";
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -1179,7 +1180,7 @@ export default function AdminDashboard() {
                                         <tr key={wp.id} className="text-sm hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="w-12 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-                                                    <img src={wp.imageUrl} alt={wp.title} className="w-full h-full object-cover" />
+                                                    <img src={getImageUrl(wp.imageUrl)} alt={wp.title} className="w-full h-full object-cover" />
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 font-medium text-slate-700">
@@ -1313,7 +1314,7 @@ export default function AdminDashboard() {
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0">
                                                         {cat.imageUrl ? (
-                                                            <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
+                                                            <img src={getImageUrl(cat.imageUrl)} alt={cat.name} className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full" style={{ backgroundColor: cat.bgColor }} />
                                                         )}
@@ -1402,7 +1403,7 @@ export default function AdminDashboard() {
                                                     className="w-20 h-10 rounded-lg flex items-center justify-center border border-slate-200 overflow-hidden"
                                                     style={{ backgroundColor: slide.bgColor }}
                                                 >
-                                                    {slide.imageUrl && <img src={slide.imageUrl} className="w-full h-full object-cover" />}
+                                                    {slide.imageUrl && <img src={getImageUrl(slide.imageUrl)} className="w-full h-full object-cover" />}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 font-medium text-slate-700">
@@ -1971,7 +1972,7 @@ export default function AdminDashboard() {
                                     <div className="space-y-3">
                                         {previewUrl && (
                                             <div className="w-24 h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
-                                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                <img src={getImageUrl(previewUrl)} alt="Preview" className="w-full h-full object-cover" />
                                             </div>
                                         )}
                                         <input
@@ -2139,7 +2140,7 @@ export default function AdminDashboard() {
                                                             {(block.previewUrl || block.imageUrl || (block.imageFile && URL.createObjectURL(block.imageFile))) ? (
                                                                 <>
                                                                     <img
-                                                                        src={block.imageFile ? URL.createObjectURL(block.imageFile) : block.imageUrl}
+                                                                        src={block.imageFile ? URL.createObjectURL(block.imageFile) : getImageUrl(block.imageUrl)}
                                                                         alt="Block"
                                                                         className="w-full h-full object-cover"
                                                                     />
@@ -2555,7 +2556,7 @@ export default function AdminDashboard() {
                                         <div className="space-y-3">
                                             {previewUrl && (
                                                 <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
-                                                    <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
+                                                    <img src={getImageUrl(previewUrl)} alt="Preview" className="w-full h-full object-contain" />
                                                 </div>
                                             )}
                                             <input
@@ -2576,7 +2577,7 @@ export default function AdminDashboard() {
                                         <div className="space-y-3">
                                             {bgPreviewUrl && (
                                                 <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
-                                                    <img src={bgPreviewUrl} alt="BG Preview" className="w-full h-full object-cover" />
+                                                    <img src={getImageUrl(bgPreviewUrl)} alt="BG Preview" className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 opacity-40" style={{ backgroundColor: newCategory.bgColor }} />
                                                 </div>
                                             )}
@@ -2705,7 +2706,7 @@ export default function AdminDashboard() {
                                     <div className="space-y-3">
                                         {previewUrl && (
                                             <div className="w-full h-32 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
-                                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                <img src={getImageUrl(previewUrl)} alt="Preview" className="w-full h-full object-cover" />
                                                 <div
                                                     className="absolute inset-0 opacity-20"
                                                     style={{ backgroundColor: newSlideshow.bgColor }}

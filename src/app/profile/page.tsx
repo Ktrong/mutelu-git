@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { User, Settings, Package, History, CheckCircle, Clock } from "lucide-react";
+import { User, Mail, Phone, Calendar, LogOut, ChevronRight, Download, Gift, Share2, Wallet, Settings, Package, History, CheckCircle, Clock } from "lucide-react";
 import Link from 'next/link';
+import { getImageUrl } from "@/lib/utils";
 
 export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
@@ -63,7 +64,7 @@ export default function ProfilePage() {
                     <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
                         <div className="w-24 h-24 bg-gold-light/30 rounded-full border-4 border-white shadow-md flex items-center justify-center overflow-hidden shrink-0">
                             {user.image ? (
-                                <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                                <img src={getImageUrl(user.image)} alt={user.name} className="w-full h-full object-cover" />
                             ) : (
                                 <User className="w-12 h-12 text-gold-secondary" />
                             )}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Phone, MapPin, Save, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Upload, User, Mail, Phone, Loader2, MapPin } from "lucide-react";
+import { getImageUrl } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -115,7 +116,7 @@ export default function EditProfilePage() {
                             <div className="relative group cursor-pointer">
                                 <div className="w-24 h-24 bg-gold-light/30 rounded-full border-4 border-white shadow-md flex items-center justify-center overflow-hidden shrink-0">
                                     {imagePreview || user?.image ? (
-                                        <img src={imagePreview || user.image} alt={user?.name} className="w-full h-full object-cover" />
+                                        <img src={imagePreview || getImageUrl(user.image)} alt={user?.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <User className="w-12 h-12 text-gold-secondary" />
                                     )}

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
+import { getImageUrl } from "@/lib/utils";
 
 interface ProductCardProps {
     id: string;
@@ -19,7 +20,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, title, price, image, cate
                 {/* Placeholder for actual image if src is empty or error */}
                 <div
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                    style={{ backgroundImage: `url(${image})` }}
+                    style={{ backgroundImage: `url(${getImageUrl(image)})` }}
                 />
 
                 {/* Overlay on hover */}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles, Moon, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSlideshows } from "@/lib/hooks";
 import Image from "next/image";
+import { getImageUrl } from "@/lib/utils";
 
 const HeroSection = () => {
     const { slideshows, isLoading } = useSlideshows();
@@ -121,7 +122,7 @@ const HeroSection = () => {
                 {currentSlide?.imageUrl && (
                     <div className="absolute inset-0">
                         <Image
-                            src={currentSlide?.imageUrl}
+                            src={getImageUrl(currentSlide?.imageUrl)}
                             alt="Background"
                             fill
                             className="object-cover"

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Download, Image as ImageIcon } from "lucide-react";
 import Link from 'next/link';
+import { getImageUrl } from "@/lib/utils";
 
 export default function MyWallpapersPage() {
     const [downloads, setDownloads] = useState<any[]>([]);
@@ -70,7 +71,7 @@ export default function MyWallpapersPage() {
                             <div key={download.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 group relative">
                                 <div className="aspect-[9/16] relative bg-slate-100 overflow-hidden">
                                     <img
-                                        src={download.generatedUrl || download.wallpaper?.imageUrl || '/images/sample-wallpaper.jpg'}
+                                        src={getImageUrl(download.generatedUrl || download.wallpaper?.imageUrl) || '/images/sample-wallpaper.jpg'}
                                         alt={download.wallpaper?.title || 'Wallpaper'}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "@/context/ThemeContext";
 import { Settings2, X, Upload, Palette, Type } from "lucide-react";
+import { getImageUrl } from "@/lib/utils";
 
 export default function ThemeCustomizer() {
     const { theme, updateTheme, saveTheme, resetTheme } = useTheme();
@@ -83,7 +84,7 @@ export default function ThemeCustomizer() {
                     <div className="flex flex-col items-center gap-3">
                         {theme.logoUrl ? (
                             <div className="relative group w-full h-20 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center p-2">
-                                <img src={theme.logoUrl} alt="Logo Preview" className="max-h-full max-w-full object-contain" />
+                                <img src={getImageUrl(theme.logoUrl)} alt="Logo Preview" className="max-h-full max-w-full object-contain" />
                                 <button
                                     onClick={() => updateTheme({ logoUrl: "" })}
                                     className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs font-bold rounded-xl transition-opacity"

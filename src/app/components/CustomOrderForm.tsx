@@ -6,6 +6,7 @@ import PhoneMockup from './iPhoneMockup';
 import { useRouter } from 'next/navigation';
 import generatePayload from 'promptpay-qr';
 import { QRCodeSVG } from 'qrcode.react';
+import { getImageUrl } from "@/lib/utils";
 
 declare const Omise: any;
 
@@ -397,7 +398,7 @@ export default function CustomOrderForm() {
                     <h4 className="text-xs font-bold text-slate-400 uppercase text-center tracking-widest mb-1">รายละเอียดเพิ่มเติม</h4>
                     {(selectedWp as any).contents.map((block: any, index: number) => (
                         <div key={block.id || index} className="relative rounded-3xl overflow-hidden shadow-lg border-2 border-white bg-white">
-                            <img src={block.imageUrl} alt="" className="w-full h-auto object-cover block" />
+                            <img src={getImageUrl(block.imageUrl)} alt="" className="w-full h-auto object-cover block" />
                             {block.text && (
                                 <div
                                     className={`absolute w-full p-4 text-center pointer-events-none break-words z-10 leading-relaxed`}
@@ -429,7 +430,7 @@ export default function CustomOrderForm() {
                     <div className="bg-gradient-to-br from-[#E0F7F1] to-[#D4F1F4] p-4 rounded-2xl shadow-md">
                         <div className="flex items-center gap-4 mb-3">
                             <div className="w-16 h-24 bg-white rounded-xl overflow-hidden shadow-lg">
-                                <img src={selectedWp.imageUrl} alt={selectedWp.title} className="w-full h-full object-cover" />
+                                <img src={getImageUrl(selectedWp.imageUrl)} alt={selectedWp.title} className="w-full h-full object-cover" />
                             </div>
                             <div className="flex-1">
                                 <h3 className="font-bold text-base text-slate-800">{selectedWp.title}</h3>
@@ -463,7 +464,7 @@ export default function CustomOrderForm() {
                                                     }`}
                                             >
                                                 <div className="w-10 h-14 bg-white rounded-lg overflow-hidden shadow-sm">
-                                                    <img src={offering.imageUrl} alt={offering.title} className="w-full h-full object-cover" />
+                                                    <img src={getImageUrl(offering.imageUrl)} alt={offering.title} className="w-full h-full object-cover" />
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className="font-bold text-sm text-slate-800">{offering.title}</p>
@@ -809,7 +810,7 @@ export default function CustomOrderForm() {
                         {/* iPhone Mockup */}
                         <div className="scale-[0.85] md:scale-100 origin-top">
                             <PhoneMockup
-                                wallpaperUrl={selectedWp.downloadUrl || selectedWp.imageUrl}
+                                wallpaperUrl={getImageUrl(selectedWp.downloadUrl || selectedWp.imageUrl)}
                                 title={formData.displayedName || selectedWp.title}
                                 subtitle={selectedWp.title}
                                 dayOfWeek={formData.dayOfWeek}

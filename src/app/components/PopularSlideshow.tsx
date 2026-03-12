@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { getImageUrl } from "@/lib/utils";
 
 export default function PopularSlideshow() {
     const [slides, setSlides] = useState([]);
@@ -82,7 +83,7 @@ export default function PopularSlideshow() {
                         <div className="absolute inset-0 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 -rotate-6 scale-105" />
                         <div className="relative w-full h-full rounded-2xl overflow-hidden border-2 border-white/40 shadow-xl rotate-3">
                             <img
-                                src={slide.imageUrl || (slide.wallpaper?.imageUrl)}
+                                src={getImageUrl(slide.imageUrl || (slide.wallpaper?.imageUrl))}
                                 alt={slide.title}
                                 className="w-full h-full object-cover"
                             />
