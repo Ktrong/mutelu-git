@@ -122,7 +122,7 @@ const HeroSection = () => {
                 {currentSlide?.imageUrl && (
                     <div className="absolute inset-0">
                         <Image
-                            src={getImageUrl(currentSlide?.imageUrl)}
+                            src={getImageUrl(currentSlide.imageUrl)}
                             alt="Background"
                             fill
                             className="object-cover"

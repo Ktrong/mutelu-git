@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Calendar, LogOut, ChevronRight, Download, Gift, Share2, Wallet, Settings, Package, History, CheckCircle, Clock } from "lucide-react";
+import { User, Settings, Package, History, CheckCircle, Clock } from "lucide-react";
 import Link from 'next/link';
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl } from '@/lib/utils';
 
 export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);

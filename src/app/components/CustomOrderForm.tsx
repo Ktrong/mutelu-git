@@ -6,11 +6,11 @@ import PhoneMockup from './iPhoneMockup';
 import { useRouter } from 'next/navigation';
 import generatePayload from 'promptpay-qr';
 import { QRCodeSVG } from 'qrcode.react';
-import { getImageUrl } from "@/lib/utils";
 
 declare const Omise: any;
 
 import { useSearchParams } from 'next/navigation';
+import { getImageUrl } from '@/lib/utils';
 
 interface Wallpaper {
     id: string;

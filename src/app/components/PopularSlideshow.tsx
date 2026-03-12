@@ -83,7 +83,7 @@ export default function PopularSlideshow() {
                         <div className="absolute inset-0 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 -rotate-6 scale-105" />
                         <div className="relative w-full h-full rounded-2xl overflow-hidden border-2 border-white/40 shadow-xl rotate-3">
                             <img
-                                src={getImageUrl(slide.imageUrl || (slide.wallpaper?.imageUrl))}
+                                src={getImageUrl(slide.imageUrl || slide.wallpaper?.imageUrl)}
                                 alt={slide.title}
                                 className="w-full h-full object-cover"
                             />

@@ -64,7 +64,8 @@ export async function POST(req: Request) {
 
         // Create unique filenames
         const timestamp = Date.now();
-        const filename = `${timestamp}-${file.name.replace(/\s+/g, '-')}`;
+        const extension = path.extname(file.name) || '.png';
+        const filename = `${timestamp}${extension}`;
         const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'wallpapers');
         const downloadDir = path.join(process.cwd(), 'public', 'uploads', 'downloads');
 
@@ -82,7 +83,8 @@ export async function POST(req: Request) {
         if (downloadFile && downloadFile.size > 0) {
             const dBytes = await downloadFile.arrayBuffer();
             const dBuffer = Buffer.from(dBytes);
-            const dFilename = `${timestamp}-hq-${downloadFile.name.replace(/\s+/g, '-')}`;
+            const dExtension = path.extname(downloadFile.name) || '.png';
+            const dFilename = `${timestamp}-hq${dExtension}`;
             const dPath = path.join(downloadDir, dFilename);
             await writeFile(dPath, dBuffer);
             downloadUrl = `/uploads/downloads/${dFilename}`;
@@ -118,7 +120,8 @@ export async function POST(req: Request) {
                     if (contentImageFile) {
                         const cBytes = await contentImageFile.arrayBuffer();
                         const cBuffer = Buffer.from(cBytes);
-                        const cFilename = `${Date.now()}_block_${i}_${contentImageFile.name.replace(/\s+/g, '-')}`;
+                        const cExtension = path.extname(contentImageFile.name) || '.png';
+                        const cFilename = `${Date.now()}_block_${i}${cExtension}`;
                         const cPath = path.join(uploadDir, cFilename);
                         await writeFile(cPath, cBuffer);
                         contentImageUrl = `/uploads/wallpapers/${cFilename}`;

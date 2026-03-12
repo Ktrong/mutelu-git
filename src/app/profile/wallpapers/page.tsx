@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Download, Image as ImageIcon } from "lucide-react";
 import Link from 'next/link';
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl } from '@/lib/utils';
 
 export default function MyWallpapersPage() {
     const [downloads, setDownloads] = useState<any[]>([]);
@@ -71,13 +71,13 @@ export default function MyWallpapersPage() {
                             <div key={download.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 group relative">
                                 <div className="aspect-[9/16] relative bg-slate-100 overflow-hidden">
                                     <img
-                                        src={getImageUrl(download.generatedUrl || download.wallpaper?.imageUrl) || '/images/sample-wallpaper.jpg'}
+                                        src={getImageUrl(download.generatedUrl || download.wallpaper?.imageUrl || '/images/sample-wallpaper.jpg')}
                                         alt={download.wallpaper?.title || 'Wallpaper'}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
                                     {/* Overlay downoad button */}
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                        <a href={download.generatedUrl || download.wallpaper?.downloadUrl || download.wallpaper?.imageUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-slate-800 p-3 rounded-full hover:scale-110 transition-transform shadow-lg">
+                                        <a href={getImageUrl(download.generatedUrl || download.wallpaper?.downloadUrl || download.wallpaper?.imageUrl)} target="_blank" rel="noopener noreferrer" className="bg-white text-slate-800 p-3 rounded-full hover:scale-110 transition-transform shadow-lg">
                                             <Download className="w-5 h-5" />
                                         </a>
                                     </div>

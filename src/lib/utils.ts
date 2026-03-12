@@ -1,17 +1,16 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
-}
-
+/**
+ * Returns the full image URL.
+ * If the path is relative, it prepends the base URL from environment variables.
+ */
 export function getImageUrl(path: string | null | undefined): string {
-    if (!path) return '';
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    if (!path) return "/placeholder.png";
+    if (path.startsWith("http")) return path;
 
-    // ดึง base URL จาก environment ตัวแปร
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+    // Fallback to empty string if NEXT_PUBLIC_BASE_URL is not set
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
 
-    // นำมาต่อกัน
-    return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+    // Ensure there's exactly one slash between baseUrl and path
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+
+    return `${baseUrl}${cleanPath}`;
 }

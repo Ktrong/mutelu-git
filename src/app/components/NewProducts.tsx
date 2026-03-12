@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
-import { getImageUrl } from "@/lib/utils";
 
 export default function NewProducts() {
     const [newest, setNewest] = useState<any>(null);
@@ -28,7 +27,7 @@ export default function NewProducts() {
                 {/* Background Image Banner */}
                 <div
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                    style={{ backgroundImage: `url(${getImageUrl(newest.imageUrl)})` }}
+                    style={{ backgroundImage: `url(${newest.imageUrl})` }}
                 >
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
                 </div>
@@ -43,7 +42,7 @@ export default function NewProducts() {
                         <div className="absolute inset-0 bg-gold-light">
                             <div
                                 className="w-full h-full bg-cover bg-center"
-                                style={{ backgroundImage: `url(${getImageUrl(newest.imageUrl)})` }}
+                                style={{ backgroundImage: `url(${newest.imageUrl})` }}
                             >
                                 {/* Clock Overlay */}
                                 <div className="absolute top-12 left-0 right-0 text-center text-white/80 font-sans z-10 drop-shadow-md">

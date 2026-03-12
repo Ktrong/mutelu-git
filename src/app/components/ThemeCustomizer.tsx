@@ -31,14 +31,28 @@ export default function ThemeCustomizer() {
         }
     }, []);
 
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                updateTheme({ logoUrl: reader.result as string });
-            };
-            reader.readAsDataURL(file);
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const res = await fetch('/api/settings/upload-logo', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    updateTheme({ logoUrl: data.url });
+                } else {
+                    alert('อัปโหลดโลโก้ล้มเหลว ขนาดไฟล์อาจใหญ่เกินไป');
+                }
+            } catch (error) {
+                console.error('Error uploading logo:', error);
+                alert('เกิดข้อผิดพลาดในการอัปโหลดโลโก้');
+            }
         }
     };
 

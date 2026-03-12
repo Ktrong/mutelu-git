@@ -2,7 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor, Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent, Menu, Search, Mail } from 'lucide-react';
+import {
+    LayoutDashboard, Image as ImageIcon, Users, ShoppingCart, Settings, Plus, Trash2, Edit, Monitor,
+    Star, Rocket, Gift, X, ArrowUp, ArrowDown, Copy, DollarSign, Percent, Menu, Search, Mail,
+    LogOut, ChevronDown, CheckCircle, Clock, AlertCircle, RefreshCw, Send, Check
+} from "lucide-react";
 import { getImageUrl } from "@/lib/utils";
 
 export default function AdminDashboard() {
@@ -2406,7 +2410,7 @@ export default function AdminDashboard() {
 
                                             <div className="col-span-2 grid grid-cols-2 gap-2 mt-1">
                                                 {editingUser.affiliateApplication?.idCardImageUrl ? (
-                                                    <a href={editingUser.affiliateApplication.idCardImageUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1 p-2 bg-white border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors shadow-sm cursor-pointer">
+                                                    <a href={getImageUrl(editingUser.affiliateApplication.idCardImageUrl)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1 p-2 bg-white border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors shadow-sm cursor-pointer">
                                                         <ImageIcon className="w-3 h-3" /> <span className="font-bold">ดูรูปบัตร ปชช.</span>
                                                     </a>
                                                 ) : (
@@ -2415,7 +2419,7 @@ export default function AdminDashboard() {
                                                     </div>
                                                 )}
                                                 {editingUser.affiliateApplication?.bankPassbookImageUrl ? (
-                                                    <a href={editingUser.affiliateApplication.bankPassbookImageUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1 p-2 bg-white border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors shadow-sm cursor-pointer">
+                                                    <a href={getImageUrl(editingUser.affiliateApplication.bankPassbookImageUrl)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1 p-2 bg-white border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors shadow-sm cursor-pointer">
                                                         <ImageIcon className="w-3 h-3" /> <span className="font-bold">ดูรูปสมุดบัญชี</span>
                                                     </a>
                                                 ) : (
