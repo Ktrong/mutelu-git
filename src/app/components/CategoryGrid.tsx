@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getImageUrl } from "@/lib/utils";
 
 export default function CategoryGrid() {
     const [categories, setCategories] = useState([]);
@@ -37,7 +38,7 @@ export default function CategoryGrid() {
                         {cat.bgImageUrl && (
                             <div
                                 className="absolute inset-0 bg-cover bg-center transition-transform group-hover:scale-110"
-                                style={{ backgroundImage: `url(${cat.bgImageUrl})` }}
+                                style={{ backgroundImage: `url(${getImageUrl(cat.bgImageUrl)})` }}
                             />
                         )}
 
@@ -67,7 +68,7 @@ export default function CategoryGrid() {
                             {cat.imageUrl ? (
                                 <div
                                     className="w-full h-[90%] bg-contain bg-bottom bg-no-repeat transition-transform group-hover:scale-110"
-                                    style={{ backgroundImage: `url(${cat.imageUrl})` }}
+                                    style={{ backgroundImage: `url(${getImageUrl(cat.imageUrl)})` }}
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center opacity-20">

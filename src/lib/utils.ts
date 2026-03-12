@@ -4,7 +4,11 @@
  */
 export function getImageUrl(path: string | null | undefined): string {
     if (!path) return "/placeholder.png";
-    if (path.startsWith("http")) return path;
+
+    // Already absolute — return as-is
+    if (path.startsWith("http") || path.startsWith("blob:") || path.startsWith("data:")) {
+        return path;
+    }
 
     // Fallback to empty string if NEXT_PUBLIC_BASE_URL is not set
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
